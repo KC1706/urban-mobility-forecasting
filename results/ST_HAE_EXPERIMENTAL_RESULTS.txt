@@ -1,0 +1,40 @@
+
+╔════════════════════════════════════════════════════════════════════════════════════╗
+║              EXPERIMENTAL RESULTS: ST-HAE vs BASELINE MODELS                       ║
+╚════════════════════════════════════════════════════════════════════════════════════╝
+
+TEST SET PERFORMANCE:
+
+Metric          Random Forest          XGBoost              ST-HAE (prototype)   Delta vs RF
+─────────────────────────────────────────────────────────────────────────────────────
+RMSE             17.5146              15.5456             97.2344          +455.16% (worse)
+MAE               8.3531               7.7225             48.1716          +476.69% (worse)
+R²                0.9816               0.9855              0.4325          -0.549  (worse)
+MAPE             27.6174%             27.3461%           191.0604%         +591.81% (worse)
+
+
+KEY OBSERVATIONS (HONEST ASSESSMENT):
+
+1. The RF and XGBoost baselines achieve strong test performance (R² ~ 0.98).
+
+2. The CURRENT ST-HAE PROTOTYPE UNDERPERFORMS the baselines by a wide margin
+   (RMSE 97.2 vs 17.5; R² 0.43 vs 0.98). It is NOT state-of-the-art and must
+   not be presented as beating the baselines.
+
+3. Why it underperforms (root causes):
+   → The "GCN" uses a fixed identity weight matrix (no learned graph convolution).
+   → The "multi-head attention" is unlearned (Q=K=V are raw features, no trained
+     projections), so it captures no useful temporal structure.
+   → Feature concatenation inflates dimensionality without adding signal.
+   → Per-demand-quantile sub-models reduce the training data available to each model.
+
+4. Value of this prototype: it documents the intended architecture and serves as a
+   negative-result baseline motivating a proper PyTorch / torch_geometric
+   re-implementation (trained GCN + trained attention, end-to-end training,
+   honest ablation). See docs/ROADMAP.md.
+
+5. Concepts worth carrying forward into a real implementation: a spatial graph over
+   zones, temporal attention for interpretability, demand-regime stratification, and
+   adaptive ensembling with drift detection — but each must be learned and evaluated
+   rigorously before any improvement claim is made.
+
