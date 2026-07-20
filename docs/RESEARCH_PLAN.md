@@ -65,10 +65,16 @@ the Phase 1 data scale-up.
 **Exit:** all baselines run reproducibly; tests green.
 
 ## Phase 1 — Data Scale-Up & Rigor (Weeks 2–3)
-- Extend window to 6–12 months; add second city (NYC TLC).
-- Add weather / holidays-events / temporal-lag features.
-- Re-run baselines at scale; confirm robustness failures persist.
-- **Track B:** lock Dataset section; first Methods draft.
+- ✅ **Second city + longer window (NYC TLC, Jan–Jun 2024, 6 mo, 19.66M trips):**
+  `src/nyc_grid_processor.py`, identical schema to Chicago → pipeline runs unchanged. Longer-window
+  goal met via NYC (Chicago Socrata too slow to extend the Chicago window). (E-014)
+- ✅ **Re-run baselines at scale; robustness failures persist:** every core failure replicates on
+  NYC (temporal 14.3×, high-demand +187%, conformal 90%→31% on high-demand); cross-city table is
+  now §7.1. Staten Island recovers a CI-excludes-0 negative-R² micro-zone (read as metric
+  degeneracy). (E-014)
+- 🔲 Add weather / holidays-events / temporal-lag features.
+- 🔲 Fix deferred LSTM predict-path bug (E-010b).
+- **Track B:** ✅ Dataset section now two-city; §7.1 cross-city results drafted. First Methods draft 🔲.
 
 ## Phase 2 — Robustness Layer, Made Rigorous (Weeks 3–4)
 - Bootstrap CIs on per-zone / peak-hour gaps.

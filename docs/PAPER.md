@@ -12,14 +12,16 @@
 Short-term urban mobility demand forecasting underpins fleet allocation, congestion
 management, and smart-city operations. Modern ML/DL models report near-perfect aggregate
 accuracy, yet we show these headline numbers **systematically hide operationally critical
-failures**: the same Random Forest that attains global R²≈0.99 on Chicago taxi demand
-collapses to strongly negative per-zone R², doubles its error during the morning rush, and
-degrades ~106% on high-demand events. We contribute (1) a **robustness stress-test
-framework** that surfaces these spatial/temporal/tail failures with calibrated uncertainty,
-(2) **ST-HAE**, a spatial-temporal hierarchical attention ensemble, evaluated with an honest
-ablation against STGCN/Graph WaveNet, and (3) an **LLM explainability layer** whose
+failures**. Across **two independent cities** — Chicago (aggregate R²=0.94) and New York City
+(R²=0.98) — the same Random Forest that looks near-perfect globally swings its error **~14–18×
+across hours of the day**, degrades **+187–481% on high-demand events**, and — most sharply — a
+prediction interval calibrated to **90%** coverage overall covers only **9–31%** of high-demand
+events. We contribute (1) a **robustness stress-test framework** that surfaces these
+spatial/temporal/tail failures with calibrated uncertainty and shows they **replicate across
+cities**, (2) **ST-HAE**, a spatial-temporal hierarchical attention ensemble, evaluated with an
+honest ablation against STGCN/Graph WaveNet, and (3) an **LLM explainability layer** whose
 failure explanations we quantitatively validate against ground-truth error attribution.
-[Numbers to be finalized after Phases 1–4.]
+[ST-HAE / LLM numbers to be finalized after Phases 3–4.]
 
 ---
 
@@ -44,20 +46,45 @@ failure explanations we quantitatively validate against ground-truth error attri
 - *Positioning:* prior work optimizes aggregate accuracy; we center operational robustness
   and validated explanation.
 
-## 3. Data and Preprocessing  ✍️ (Phase 1; pipeline reproducible as of Phase 0)
+## 3. Data and Preprocessing  ✍️ (Phase 1 — two cities, both reproducible from raw)
+
+We evaluate on **two independent cities** built to an **identical (zone × hour) schema** (14
+engineered features: temporal + economic + spatial-centroid), so the same forecasting and
+robustness pipeline runs unchanged on both. This is the basis for the cross-city replication
+in §7.
+
+**City 1 — Chicago (`src/grid_processor.py`).**
 - **Source:** City of Chicago "Taxi Trips" open data (`Taxi_Trips_2026.csv`, 463,001 trips,
-  Jan 1 – Feb 1 2026 in the current cut). NYC TLC as second city (planned, Phase 1).
-- **Grid×hour aggregation (now reproducible from raw):** trips → (zone, hour) cells via
-  `src/grid_processor.py`, verified to reproduce the historical dataset (trip_count exact;
-  averaged features to ~1e-14). 14 engineered features (temporal + economic + spatial-centroid).
-- **Spatial partition (real, as of Phase 1):** zones are the **9 official Chicago "sides"**
-  (community-area→side, all 77 areas partitioned exactly once) + "Unknown" (missing area).
-  `grid_processor.py --zone-scheme sides`. The legacy synthetic `(CA-1)//8` "blocks" scheme is
-  retained only to reproduce the historical CSV. Headline results use real sides.
+  Jan 1 – Feb 1 2026 — a 32-day cut). Aggregation verified to reproduce the historical
+  processed CSV (trip_count exact; averaged features to ~1e-14).
+- **Spatial partition (real):** the **9 official Chicago "sides"** (community-area→side, all
+  77 areas partitioned exactly once) + "Unknown". `--zone-scheme sides`. The legacy synthetic
+  `(CA-1)//8` "blocks" scheme is retained only to reproduce the historical CSV.
 - **Data-quality note:** 5 original rows (27 trips) had corrupt timestamps; the reproducible
   pipeline places them in valid hourly cells instead.
-- **Splits:** chronological train/val/test, per-zone aware (Phase 0 utility). 🔲
-- Table: dataset statistics (trips, cells, features, demand distribution). 🔲
+
+**City 2 — New York City (`src/nyc_grid_processor.py`, added Phase 1).**
+- **Source:** NYC TLC "Yellow Taxi Trip Records", monthly parquet, **Jan–Jun 2024 (6 months)**.
+  Raw: **20.3M trips → 19.66M kept** (≈3.2% dropped by cleaning) → **22,346 (borough × hour)
+  cells**. A ~40× larger and 6× longer sample than the Chicago cut.
+- **Spatial partition (real):** pickup TLC zone (`PULocationID`) → **NYC borough** via the
+  official `taxi_zone_lookup.csv` (Manhattan / Brooklyn / Queens / Bronx / Staten Island / EWR
+  + "Unknown") — the natural analogue of Chicago's "sides". A finer `--zone-scheme zone` keys on
+  the ~260 TLC zones directly.
+- **Cleaning (documented, reproducible):** keep pickups within the file's nominal month (drops a
+  tail of corrupt out-of-range timestamps, e.g. year 2002); trip_distance ∈ (0,100] mi;
+  fare ∈ [0,500] \$; duration ∈ (0,180] min; PULocationID present in the lookup.
+- **Coordinates:** the parquet stores only zone IDs, so pickup lat/lon are filled with the
+  pickup **borough centroid** (documented as approximate; occupies the same spatial-feature slot
+  as Chicago's centroids). "Unknown"-zone centroids are NaN → mean-imputed in `prepare_features`,
+  exactly as Chicago's Unknown zone.
+- **Spatial imbalance (real, and useful):** yellow cabs are Manhattan-dominated — Manhattan
+  averages **4,026 trips/hr** vs Staten Island **1.1 trips/hr**, a far steeper gradient than
+  Chicago and a natural stress test for per-zone robustness.
+
+- **Splits:** chronological train/val/test (70/15/15) on ordered unique timestamps, no same-hour
+  straddle (`src/splits.py`). ✅
+- Table: dataset statistics (trips, cells, features, demand distribution) per city. 🔲
 
 ## 4. Robustness Evaluation Framework  ✍️ (Phase 2 — core contribution; CIs + conformal done)
 - Four stress dimensions: spatial (per zone), temporal (per hour), stability (over time),
@@ -83,7 +110,7 @@ failure explanations we quantitatively validate against ground-truth error attri
 - **Faithfulness eval:** agreement between generated explanations and ground-truth per-zone /
   per-hour error attribution; provider ablation (GPT-4 / Claude / Mistral).
 
-## 7. Experiments and Results  ✍️ (leakage-free; 32-day Chicago, single run — CIs in Phase 2)
+## 7. Experiments and Results  ✍️ (leakage-free; Chicago 32 d + NYC 6 mo, CIs — Phase 1/2)
 
 **Honest baselines (chronological 70/15/15 split, held-out test = latest 15%):**
 | Model | RMSE | MAE | R² | MAPE |
@@ -108,14 +135,52 @@ memorization. (ENGINEERING_LOG E-008/E-011.)
   The model is *confidently wrong exactly when demand is high* — a crisp, quantitative failure
   that a single global metric or interval hides.
 
-**Thesis (rigorous):** aggregate R²=0.94 conceals a ~18× temporal error swing, +481% high-demand
-degradation, and a calibration collapse (90%→9% coverage) on high-demand events. The dramatic
-per-zone R² numbers do not survive CIs and are dropped. Remaining Phase 1: longer window + NYC.
+### 7.1 Cross-city replication (NYC, 6 months) — the robustness failures generalize  ⭐
+
+We rerun the *identical* pipeline on the second city (NYC yellow taxi, Jan–Jun 2024, borough
+grid, RandomForest, leakage-free chronological split). Every core failure mode reproduces, and
+the small-zone effect that Chicago's CIs retracted is *recovered* under NYC's steeper spatial
+gradient.
+
+| Metric (held-out test) | **Chicago** (32 d, 9 sides) | **NYC** (6 mo, boroughs) |
+|---|---|---|
+| Aggregate R² (the "false comfort") | 0.939 | **0.981** |
+| Temporal worst/best-hour RMSE ratio | 17.9× [12.6, 32.2] | **14.3× [11.3, 22.8]** |
+| High-demand (≥p95) RMSE degradation | +481% [377, 607] | **+187% [135, 248]** |
+| ⭐ Conformal @90% nominal → high-demand coverage | 9.1% | **31.0%** |
+| Worst per-zone R² (95% CI) | Far SW −0.02 [−1.32, 0.62] *(retracted)* | **Staten Is. −5.96e4 [−2.4e5, −826]** *(CI excludes 0)* |
+
+**Reading of the table.**
+- *Higher aggregate R² (0.98), worse hidden failures:* the larger, cleaner NYC sample pushes the
+  headline metric even closer to "perfect," yet the same stress tests expose a 14× temporal swing
+  and a 3× high-demand error blow-up. The false-comfort thesis is *not* an artifact of Chicago's
+  small window.
+- *Calibration collapse replicates:* a 90%-nominal conformal interval covers only **31%** of NYC
+  high-demand events (vs 9% in Chicago). Two cities, same qualitative failure — the model is
+  confidently wrong exactly where demand is high.
+- *Negative-R² micro-zone, done honestly:* NYC's Staten Island (~1.1 trips/hr, near-constant
+  demand) yields a strongly negative per-zone R² whose CI **excludes zero** — but we read this as
+  **metric degeneracy**, not catastrophic error: with a near-constant target the R² denominator
+  collapses, so R² is the wrong tool for micro-zones (absolute error there is tiny). This *is* the
+  paper's point — global **and** naïve per-zone R² both mislead; only absolute-error + calibrated
+  coverage tell the operational truth.
+
+### 7.2 Thesis (rigorous)
+
+Across **two cities**, an aggregate R² of 0.94–0.98 conceals a ~14–18× temporal error swing, a
++187–481% high-demand degradation, and a calibration collapse (90%→9–31% coverage) on high-demand
+events. The dramatic per-zone R² numbers are either retracted (Chicago) or shown to be metric
+degeneracy (NYC micro-zones); the robust, operationally meaningful failures are the temporal
+dispersion, the tail degradation, and the conformal under-coverage — and all three replicate
+across cities. (Reproduce: `robustness_ci.py --data data/processed/{chicago_taxi_sides,nyc_taxi_boroughs}.csv`;
+JSON in `results/`.)
 
 ## 8. Discussion & Limitations  🔲
 - Aggregate metrics as a false comfort; operational deployment implications.
-- Limitations: single-city/short-window (until Phase 1 fixes it), reconstructed pipeline,
-  ST-HAE outcome risk.
+- Limitations: **two cities** (Chicago 32 d + NYC 6 mo) but both US taxi systems and a single
+  mode; NYC yellow-cab coverage is Manhattan-skewed (a property we exploit, but it limits
+  outer-borough conclusions); reconstructed Chicago pipeline; NYC lat/lon approximated by borough
+  centroid; ST-HAE outcome risk.
 
 ## 9. Conclusion  🔲
 

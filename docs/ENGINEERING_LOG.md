@@ -211,6 +211,40 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   estimates on small strata were within noise.
 
 
+### E-014 · 2026-07-21 · [P1] ✅ Second city (NYC, 6 mo) — every robustness failure replicates
+- **What:** added `src/nyc_grid_processor.py` (+`tests/test_nyc_grid_processor.py`, 7 green)
+  building an NYC yellow-taxi (zone × hour) dataset with the **identical schema** to Chicago, so
+  the whole pipeline runs unchanged. Source: NYC TLC monthly parquet, Jan–Jun 2024.
+  `data/processed/nyc_taxi_boroughs.csv` = **22,346 cells, 19.66M trips** (20.3M raw, 3.2% cleaned).
+- **Symptom / gotchas resolved while building:**
+  - Raw parquet carries a tail of **corrupt out-of-range timestamps** (pickup min = 2002) → filter
+    each file to its nominal (year, month).
+  - Parquet has **no lat/lon**, only `PULocationID` → map to borough via `taxi_zone_lookup.csv`,
+    fill centroid from a borough-centroid table; "Unknown" (LocID 264/265) → NaN → mean-imputed by
+    `prepare_features` (same path as Chicago's Unknown zone, so no code change needed).
+  - `pyarrow` wasn't in the venv → `pip install pyarrow` (25.0.0).
+  - Chicago Socrata endpoint is reachable but **too slow / no server-side date filter** to extend
+    the Chicago window; NYC CloudFront parquet is fast (~10 s/file). So the "longer window" goal is
+    met via NYC (6 mo) rather than more Chicago months — documented as a limitation.
+- **New findings (cross-city replication — the big result):** rerunning `robustness_ci.py` on NYC,
+  every core failure reproduces and the retracted small-zone effect is *recovered*:
+  - Aggregate R² **0.981** (even higher than Chicago's 0.939 — false comfort is not a small-sample
+    artifact).
+  - Temporal worst/best-hour ratio **14.3× [11.3, 22.8]** (Chicago 17.9×).
+  - High-demand degradation **+187% [135, 248]** (Chicago +481%).
+  - ⭐ Conformal @90% nominal → **31.0%** coverage on high-demand (Chicago 9.1%) — *the headline
+    calibration collapse replicates in a second city.*
+  - Staten Island per-zone R² **−5.96e4 [−2.4e5, −826]**, CI **excludes 0** — but read as **metric
+    degeneracy** (near-constant ~1.1 trips/hr → R² denominator collapses), reinforcing "R² is the
+    wrong tool for micro-zones," not a catastrophic-error claim.
+- **Learning:** building the second city to a *byte-identical output schema* (shared
+  `OUTPUT_COLUMNS`, shared feature flags — asserted in a test) meant zero pipeline changes and a
+  clean apples-to-apples comparison. The cross-city table is now the paper's strongest evidence:
+  the robustness failures are a property of the *problem*, not one dataset.
+- Reports: `results/nyc_robustness_ci.json`, `results/chicago_sides_robustness_ci.json`. Full
+  suite 47 passed.
+
+
 ## Phase 3 — ST-HAE: The Real Model  🔲 (not started)
 ## Phase 4 — LLM Explainability, Evaluated  🔲 (not started)
 ## Phase 5 — Synthesis & Release  🔲 (not started)

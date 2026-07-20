@@ -43,3 +43,4 @@ nbconvert==7.9.2
 # Install separately if you have a CUDA environment:
 #   pip install cudf-cu11 cuml-cu11 cugraph-cu11 dask-cudf-cu11 datashader holoviews
 # ---------------------------------------------------------------------------
+pyarrow==25.0.0
