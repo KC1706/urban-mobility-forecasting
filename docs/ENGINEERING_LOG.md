@@ -167,7 +167,26 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
 
 ---
 
-## Phase 1 — Data Scale-Up & Rigor  🔲 (not started)
+## Phase 1 — Data Scale-Up & Rigor (in progress)
+
+### E-012 · 2026-07-21 · [P1] ✅ Real Chicago geography replaces synthetic zones
+- Added `--zone-scheme {blocks,sides}` to `grid_processor.py`. `sides` = the 9 official Chicago
+  sides (community-area→side, all 77 areas partitioned once, unit-tested). Legacy `blocks`
+  retained + still reproduces the historical CSV. Built `data/processed/chicago_taxi_sides.csv`.
+- **Robustness re-checked under real geography (RF, held-out test):**
+  - Aggregate R² stable: 0.939 (sides) vs 0.941 (blocks).
+  - A **genuine negative-R² zone re-emerges: Far Southwest R²=−0.795** (low-volume residential
+    far-SW). Interpretable and real — unlike the retracted −2674 artifact.
+  - Per-zone RMSE spread ~27× (Far Southeast 3.2 → Central/Loop 85.8).
+  - Temporal worst/best-hour ratio 15.3× (vs 15.8× blocks); high-demand degradation +387%
+    (vs +340%).
+- **Learning:** the robustness thesis is *not* an artifact of the arbitrary grouping — it holds
+  across schemes, and real geography makes the negative-R² claim defensible (a real neighborhood,
+  not a numeric block). This is a stronger paper result than the original.
+- **Remaining Phase 1:** extend window (6–12 mo), add NYC TLC as a second city, weather/holiday/
+  lag features; fix deferred LSTM predict-path bug.
+
+
 ## Phase 2 — Robustness Layer, Made Rigorous  🔲 (not started)
 ## Phase 3 — ST-HAE: The Real Model  🔲 (not started)
 ## Phase 4 — LLM Explainability, Evaluated  🔲 (not started)

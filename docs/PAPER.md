@@ -50,11 +50,10 @@ failure explanations we quantitatively validate against ground-truth error attri
 - **Grid×hour aggregation (now reproducible from raw):** trips → (zone, hour) cells via
   `src/grid_processor.py`, verified to reproduce the historical dataset (trip_count exact;
   averaged features to ~1e-14). 14 engineered features (temporal + economic + spatial-centroid).
-- **⚠️ Spatial-semantics caveat (must state in the paper):** the 10 "zones" are **not real
-  Chicago geography** — they are contiguous blocks of 8 Community-Area *numbers*
-  (`zone = f((CA-1)//8)`; CA≥65→"Other"; missing→"Unknown"). The directional names are
-  arbitrary labels. *Planned fix (Phase 1):* replace with a genuine spatial partition (Chicago
-  community-area "sides", or a lat/lon grid) so the grid-level claim is geographically real.
+- **Spatial partition (real, as of Phase 1):** zones are the **9 official Chicago "sides"**
+  (community-area→side, all 77 areas partitioned exactly once) + "Unknown" (missing area).
+  `grid_processor.py --zone-scheme sides`. The legacy synthetic `(CA-1)//8` "blocks" scheme is
+  retained only to reproduce the historical CSV. Headline results use real sides.
 - **Data-quality note:** 5 original rows (27 trips) had corrupt timestamps; the reproducible
   pipeline places them in valid hourly cells instead.
 - **Splits:** chronological train/val/test, per-zone aware (Phase 0 utility). 🔲
@@ -91,18 +90,21 @@ vs. the earlier *leaky* numbers (random split + train-on-all): RF RMSE 8.54 / R�
 MAPE 17.8%. Leakage inflated RMSE ~3.8× and halved MAPE — the "near-perfect" model was largely
 memorization. (ENGINEERING_LOG E-008/E-011.)
 
-**Robustness (RandomForest, corrected row alignment):**
-- *Per-zone:* every zone R² is **positive, 0.47–0.88** (Downtown 0.712). The earlier
-  "Downtown R²≈−2674 / all regions negative" was an **index-misalignment artifact** (E-009),
-  now retracted. What is real: absolute error varies ~30× across zones (Downtown RMSE 2.25 →
-  North 68.75; CV=1.18).
-- *Temporal:* worst/best hour RMSE ratio ≈ **15.8×** (hour 4: 3.36 → hour 15: 53.13).
-- *Extreme events:* high-demand RMSE degrades **+340%** vs normal; low-demand −81%.
+**Robustness (RandomForest, real Chicago sides, corrected row alignment):**
+- *Per-zone:* aggregate R²=0.94 hides a genuinely **negative-R² zone — Far Southwest R²=−0.795**
+  (low-volume residential far-SW; model can't beat the mean), while dense zones reach 0.90.
+  Absolute error varies ~27× (Far Southeast RMSE 3.2 → Central/Loop 85.8; CV=1.2).
+  *(The earlier "Downtown R²=−2674" was an index-misalignment artifact (E-009), retracted;
+  the negative-R² finding now rests on a real, interpretable zone.)*
+- *Temporal:* worst/best hour RMSE ratio ≈ **15.3×** (hour 4: 3.69 → hour 15: 56.37).
+- *Extreme events:* high-demand RMSE degrades **+387%** vs normal.
+- *Robust across zone schemes:* synthetic-blocks vs real-sides give near-identical aggregate R²
+  (0.941 vs 0.939), temporal (15.8× vs 15.3×), and high-demand (+340% vs +387%) — the finding is
+  not an artifact of the grouping.
 
-**Thesis stands (and is cleaner):** a strong aggregate R²=0.94 still hides that afternoon-peak
-error is ~16× off-peak and high-demand error is +340% — but the claim is now the *dispersion of
-error* (temporal + demand-strata + per-zone RMSE), not negative R². Phase 2 adds bootstrap CIs
-and conformal coverage; Phase 1 re-checks all of this under real spatial zones + longer window.
+**Thesis (on real geography):** a strong aggregate R²=0.94 hides a negative-R² zone, a ~15×
+temporal error swing, and +387% high-demand degradation. Phase 2 adds bootstrap CIs + conformal
+coverage; the window extension + second city (NYC) are the remaining Phase 1 items.
 
 ## 8. Discussion & Limitations  🔲
 - Aggregate metrics as a false comfort; operational deployment implications.

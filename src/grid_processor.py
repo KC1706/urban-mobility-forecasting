@@ -35,8 +35,25 @@ RAW_DEFAULT = Path(__file__).parent.parent / "data" / "raw" / "Taxi_Trips_2026.c
 PROCESSED_DEFAULT = Path(__file__).parent.parent / "data" / "processed" / "chicago_taxi_processed.csv"
 
 # Directional labels for community-area blocks 1-64 (8 areas each); >=65 -> "Other".
+# NOTE: this "blocks" scheme is the ORIGINAL (synthetic) partition, kept only so `--verify`
+# can reproduce the historical CSV. Prefer the real "sides" scheme below for new work.
 ZONE_NAMES = ["North", "Northwest", "West", "Southwest",
               "South", "Southeast", "FarSouth", "Downtown"]
+
+# Real Chicago geography: the 9 official "sides", each a set of Community Area numbers.
+# Source: City of Chicago community-area -> side groupings (covers all 77 areas exactly once).
+CHICAGO_SIDES = {
+    "Far North":      [1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 76, 77],
+    "North":          [5, 6, 7, 21, 22],
+    "Northwest":      [15, 16, 17, 18, 19, 20],
+    "West":           [23, 24, 25, 26, 27, 28, 29, 30, 31],
+    "Central":        [8, 32, 33],
+    "South":          [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 60, 69],
+    "Southwest":      [56, 57, 58, 59, 61, 62, 63, 64, 65, 66, 67, 68],
+    "Far Southwest":  [70, 71, 72, 73, 74, 75],
+    "Far Southeast":  [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55],
+}
+_SIDE_BY_CA = {ca: side for side, cas in CHICAGO_SIDES.items() for ca in cas}
 
 RUSH_HOURS = {7, 8, 9, 17, 18, 19}
 NIGHT_HOURS = {0, 1, 2, 3, 4, 5, 22, 23}
@@ -56,11 +73,21 @@ RAW_USECOLS = [
 
 
 def community_area_to_zone(ca) -> str:
-    """Map a Chicago Community Area number to its zone label (see module docstring)."""
+    """Legacy 'blocks' scheme: Community Area -> synthetic (CA-1)//8 label (see docstring)."""
     if pd.isna(ca):
         return "Unknown"
     idx = (int(ca) - 1) // 8
     return ZONE_NAMES[idx] if idx < len(ZONE_NAMES) else "Other"
+
+
+def community_area_to_side(ca) -> str:
+    """Real 'sides' scheme: Community Area -> official Chicago side (real geography)."""
+    if pd.isna(ca):
+        return "Unknown"
+    return _SIDE_BY_CA.get(int(ca), "Other")
+
+
+_ZONE_FN = {"blocks": community_area_to_zone, "sides": community_area_to_side}
 
 
 def _to_numeric(series: pd.Series) -> pd.Series:
@@ -71,9 +98,13 @@ def _to_numeric(series: pd.Series) -> pd.Series:
 class ChicagoTaxiGridProcessor:
     """Build the (zone x hour) demand matrix from raw Chicago taxi trips."""
 
-    def __init__(self, raw_path: Path = RAW_DEFAULT, processed_path: Path = PROCESSED_DEFAULT):
+    def __init__(self, raw_path: Path = RAW_DEFAULT, processed_path: Path = PROCESSED_DEFAULT,
+                 zone_scheme: str = "blocks"):
+        if zone_scheme not in _ZONE_FN:
+            raise ValueError(f"zone_scheme must be one of {list(_ZONE_FN)}, got {zone_scheme!r}")
         self.raw_path = Path(raw_path)
         self.processed_path = Path(processed_path)
+        self.zone_scheme = zone_scheme  # 'blocks' (legacy, reproduces history) | 'sides' (real)
 
     def build(self) -> pd.DataFrame:
         """Aggregate raw trips into the grid dataset and return it (also computes features)."""
@@ -88,7 +119,7 @@ class ChicagoTaxiGridProcessor:
             logger.warning(f"Dropping {n_bad} trips with unparseable Trip Start Timestamp")
         raw = raw.loc[ts.notna()].copy()
         raw["pickup_datetime"] = ts[ts.notna()].dt.floor("h")
-        raw["pickup_borough"] = raw["Pickup Community Area"].map(community_area_to_zone)
+        raw["pickup_borough"] = raw["Pickup Community Area"].map(_ZONE_FN[self.zone_scheme])
 
         for col in ["Trip Miles", "Fare", "Trip Seconds",
                     "Pickup Centroid Latitude", "Pickup Centroid Longitude"]:
@@ -167,11 +198,13 @@ def main():
     ap = argparse.ArgumentParser(description="Build/verify the Chicago taxi grid dataset")
     ap.add_argument("--raw", default=str(RAW_DEFAULT))
     ap.add_argument("--out", default=str(PROCESSED_DEFAULT))
+    ap.add_argument("--zone-scheme", choices=["blocks", "sides"], default="blocks",
+                    help="'blocks' = legacy (CA-1)//8 (reproduces history); 'sides' = real geography")
     ap.add_argument("--build", action="store_true", help="write processed CSV from raw")
     ap.add_argument("--verify", action="store_true", help="rebuild and diff vs existing CSV")
     args = ap.parse_args()
 
-    proc = ChicagoTaxiGridProcessor(args.raw, args.out)
+    proc = ChicagoTaxiGridProcessor(args.raw, args.out, zone_scheme=args.zone_scheme)
     if args.verify:
         raise SystemExit(0 if proc.verify() else 1)
     if args.build:

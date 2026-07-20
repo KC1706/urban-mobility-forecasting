@@ -9,8 +9,8 @@ import pandas as pd
 import pytest
 
 from grid_processor import (
-    ChicagoTaxiGridProcessor, community_area_to_zone, _to_numeric,
-    RUSH_HOURS, NIGHT_HOURS, OUTPUT_COLUMNS,
+    ChicagoTaxiGridProcessor, community_area_to_zone, community_area_to_side,
+    CHICAGO_SIDES, _to_numeric, RUSH_HOURS, NIGHT_HOURS, OUTPUT_COLUMNS,
 )
 
 
@@ -26,6 +26,26 @@ def test_zone_mapping_blocks(ca, zone):
 def test_missing_community_area_is_unknown():
     assert community_area_to_zone(np.nan) == "Unknown"
     assert community_area_to_zone(float("nan")) == "Unknown"
+
+
+def test_chicago_sides_partition_covers_all_77_areas_once():
+    """Real-geography scheme must partition community areas 1..77 exactly once."""
+    all_cas = [ca for cas in CHICAGO_SIDES.values() for ca in cas]
+    assert sorted(all_cas) == list(range(1, 78))      # every area, exactly once
+    assert len(CHICAGO_SIDES) == 9                     # the 9 official sides
+
+
+@pytest.mark.parametrize("ca,side", [
+    (8, "Central"), (32, "Central"), (33, "Central"),   # the Loop / near-downtown
+    (76, "Far North"), (1, "Far North"),                # O'Hare + Rogers Park
+    (6, "North"), (28, "West"), (49, "Far Southeast"),
+])
+def test_community_area_to_side_spot_checks(ca, side):
+    assert community_area_to_side(ca) == side
+
+
+def test_side_missing_is_unknown():
+    assert community_area_to_side(np.nan) == "Unknown"
 
 
 def test_flag_hour_sets_match_recovered_definition():
