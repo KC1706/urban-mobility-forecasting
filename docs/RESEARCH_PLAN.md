@@ -87,18 +87,20 @@ the Phase 1 data scale-up.
 2. ✅ Trained dense Kipf GCN in plain PyTorch (no `torch_geometric` — zones are few). (E-015)
 3. ✅ Trained temporal multi-head self-attention encoder (L=24 lookback). (E-015)
 4. ✅ End-to-end training + early stopping; masked leakage-free eval == RF's test cells. (E-015)
-5. ✍️ Honest ablation (full vs no_spatial/no_temporal/no_hierarchical, with CIs) — **runs on
-   Kaggle GPU** (`notebooks/st_hae_kaggle.ipynb`, `--device cuda`); user is not training locally.
+5. ✅ Honest ablation (full vs no_spatial/no_temporal/no_hierarchical, CIs) **done on Kaggle**
+   (both cities). `results/st_hae_{chicago,nyc}.json`. (E-016)
 6. 🔲 Comparison vs STGCN / Graph WaveNet (published ST-GNN baselines — remaining work).
 
-**Preliminary (Chicago, single run):** ST-HAE full R²=0.9551 vs RF 0.9388, and it *narrows* the
-temporal swing (13.4× vs 17.9×) and high-demand degradation (+370% vs +481%). The guardrail below
-is looking unnecessary, but keep the framing until the Kaggle ablation + NYC confirm it.
+**Result (both cities, CI-backed — E-016):** the best variant is **ST-HAE−spatial** (temporal
+attention + MoE): Chicago R²=0.9608, NYC R²=0.9902, both **beating RF** and flattening the temporal
+swing to 6–7× (from 14–18×). Honest negative result: the **spatial GCN over-smooths** coarse zones
+and hurts — dropped from the recommended model, motivating finer-grid future work.
 
-**Guardrail:** if ST-HAE doesn't beat baselines, paper pivots to
-"robustness + explainability framework" as the contribution, ST-HAE as an honest ablation.
+**Guardrail (resolved):** ST-HAE (temporal+MoE core) *does* beat baselines on both cities, so the
+paper leads with the model + the ablation rather than pivoting. The framework (§4) remains the spine.
 
-**Track B:** ST-HAE architecture section drafted (§5); ablation/baseline tables await Kaggle JSONs.
+**Track B:** ST-HAE §5 written with the two-city ablation table + CIs and the spatial-GCN negative
+result. Remaining: STGCN/GraphWaveNet baselines, finer-grid GCN retry.
 
 ## Phase 4 — LLM Explainability, Evaluated (Weeks 8–9)
 - Ground-truth failure attribution (per-zone/per-hour causes).

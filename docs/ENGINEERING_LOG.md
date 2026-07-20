@@ -245,7 +245,39 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   suite 47 passed.
 
 
-## Phase 3 — ST-HAE: The Real Model  ✍️ (implemented + trained; ablation on Kaggle GPU)
+## Phase 3 — ST-HAE: The Real Model  ✅ (trained + full ablation on two cities, on Kaggle)
+
+### E-016 · 2026-07-21 · [P3] ⭐ Ablation (both cities, on Kaggle): the spatial GCN HURTS — honest negative result
+- **What ran:** pushed a private Kaggle *script kernel* (`kunalchandola/st-hae-training`) via the
+  Kaggle API that git-clones the repo and runs `st_hae.py --ablation` on both cities with B=2000
+  bootstrap CIs; pulled `results/st_hae_{chicago,nyc}.json`. **Not run on the user's laptop.**
+- **Kaggle GPU gotcha (E-015 device fix earned its keep):** the assigned GPU was a **Tesla P100
+  (sm_60)**, incompatible with Kaggle's PyTorch build (sm_70+ only) → `cudaErrorNoKernelImage`. v1
+  hard-crashed; after adding a device-probe fallback (`resolve_device` tries a tiny kernel, falls
+  back to CPU), v2 completed on **Kaggle CPU**. Deterministic, so results are unaffected. (A T4
+  would have run on GPU; there's no reliable Kaggle-API field to force the accelerator model.)
+- **⭐ The result (replicates across BOTH cities):**
+  - **Temporal attention is essential** — `no_temporal` is the *worst* variant (Chicago R²=0.9371,
+    *below* RF's 0.9388; NYC 0.9784). The learned temporal encoder does the heavy lifting.
+  - **The spatial GCN HURTS** — `no_spatial` is the *best* variant: Chicago R²=0.9608 (RMSE 28.08)
+    vs full 0.9541; NYC R²=0.9902 (RMSE 192.3) vs full 0.9829 (RMSE 254.4). Root cause:
+    demand-correlation graph over few coarse zones is near-complete (Chicago 88 edges/10 nodes), so
+    the 2-layer GCN **over-smooths**, averaging Manhattan's ~4000/hr into tiny boroughs. Dropping it
+    even raises tiny-zone R² (NYC Staten Island −0.39→−0.02, Manhattan 0.943→0.968).
+  - **MoE head:** small consistent gain (NYC full 0.9829 vs no_hier 0.9801).
+- **Recommended model:** ST-HAE−spatial (temporal + MoE) beats RF on both cities and **flattens the
+  temporal error swing to 6–7× from RF's 14–18×**. The arc still closes; we just don't over-claim the
+  spatial pillar.
+- **Trade-off (reported, not hidden):** on NYC `full` has a better high-demand degradation *ratio*
+  (+239% vs −spatial's +322%) — GCN smoothing spreads error more evenly at a big aggregate cost.
+- **Discrepancy vs E-015 preliminary:** local smoke-test `full` was R²=0.9551/temporal 13.4×; Kaggle
+  `full` R²=0.9541/temporal 7.0×. R² is stable; the worst/best-hour *ratio* is noisy and differs with
+  torch build (local 2.1.0 vs Kaggle 2.10.0) + BLAS threading. Kaggle B=2000 numbers are canonical.
+- **Learning:** the ablation is the point. A clean "our 4-part model wins" would have been *less*
+  true and less interesting than "temporal+MoE wins, spatial over-smooths at this granularity" — and
+  the negative result hands us a concrete, motivated future-work direction (finer ~260 TLC zones /
+  learned sparse adjacency). Keeping eval identical to the baseline (same masked cells) is what makes
+  both the win and the negative result defensible.
 
 ### E-015 · 2026-07-21 · [P3] ✅ Trained ST-HAE (R² 0.43 → 0.955) beats RF and narrows the gaps
 - **What:** rebuilt the untrained prototype as a real end-to-end PyTorch model `src/st_hae.py`

@@ -18,10 +18,13 @@ across hours of the day**, degrades **+187–481% on high-demand events**, and �
 prediction interval calibrated to **90%** coverage overall covers only **9–31%** of high-demand
 events. We contribute (1) a **robustness stress-test framework** that surfaces these
 spatial/temporal/tail failures with calibrated uncertainty and shows they **replicate across
-cities**, (2) **ST-HAE**, a spatial-temporal hierarchical attention ensemble, evaluated with an
-honest ablation against STGCN/Graph WaveNet, and (3) an **LLM explainability layer** whose
-failure explanations we quantitatively validate against ground-truth error attribution.
-[ST-HAE / LLM numbers to be finalized after Phases 3–4.]
+cities**, (2) **ST-HAE**, a trained spatial-temporal hierarchical attention model whose *honest
+leave-one-pillar-out ablation* on both cities shows a **temporal-attention + mixture-of-experts**
+core beats the baselines (Chicago R² 0.939→0.961, NYC 0.981→0.990) and **halves the temporal error
+swing** (to 6–7× from 14–18×), together with a controlled negative result — the spatial graph
+convolution *over-smooths* coarse zones and is dropped — and (3) an **LLM explainability layer**
+whose failure explanations we quantitatively validate against ground-truth error attribution.
+[LLM numbers to be finalized after Phase 4.]
 
 ---
 
@@ -98,48 +101,76 @@ in §7.
 - Headline figures: hourly RMSE curve w/ CIs, demand-stratified degradation w/ CIs, per-stratum
   conformal coverage bar. 🔲 (plots)
 
-## 5. ST-HAE Model  ✍️ (Phase 3 — critical path; implemented + trained, ablation on Kaggle GPU)
+## 5. ST-HAE Model + Ablation  ✅ (Phase 3 — trained end-to-end; full ablation on two cities)
 
 **From negative result to real model.** The original `st_hae_algorithm.py` prototype left every
 component *untrained* (fixed-identity "GCN", unlearned dot-product "attention", data-starving
 per-quantile sub-models) and honestly underperformed the baselines (R²≈0.43). We re-implemented it
-end-to-end in PyTorch (`src/st_hae.py`), keeping the four conceptual pillars but making each one
-*learned*:
-- **Spatial** — a trained Kipf-normalized graph convolution (2 layers) over zones. The adjacency
-  is built from *training-set* per-zone demand correlation (edge where ρ>0.3) + self-loops. Zones
-  are few (≤ dozens), so a dense GCN needs no `torch_geometric`.
+end-to-end in PyTorch (`src/st_hae.py`), making each of the four conceptual pillars *learned*:
+- **Spatial** — a trained Kipf-normalized graph convolution (2 layers) over zones; adjacency from
+  *training-set* per-zone demand correlation (edge where ρ>0.3) + self-loops. Zones are few
+  (≤ dozens), so a dense GCN needs no `torch_geometric`.
 - **Temporal** — a trained 2-layer multi-head self-attention encoder over an L=24 h lookback window
   (learned Q/K/V), replacing the prototype's raw-feature dot products.
-- **Hierarchical** — a learned **mixture-of-experts** head (3 experts + softmax gate). Unlike the
-  prototype's per-quantile data split, *all* data trains *all* experts end-to-end; the gate learns
-  the demand-regime specialization.
-- **Ensemble** — the MoE gate *is* the adaptive combination, trained jointly with everything else.
+- **Hierarchical** — a learned **mixture-of-experts** head (3 experts + softmax gate); *all* data
+  trains *all* experts end-to-end (no per-quantile data starvation).
+- **Ensemble** — the MoE gate *is* the adaptive combination, trained jointly.
 
 **Training/eval.** End-to-end (Adam, grad-clip, early stopping on val RMSE), leakage-free
 chronological split (`splits.py`), per-zone standardized targets, masked to the cells observed in
 the processed CSV so **y_true is identical to the RandomForest baseline** in §7. Same robustness
-dimensions + bootstrap CIs as §4/§7. Deterministic (seed 42). Runs on GPU via the Kaggle notebook
-`notebooks/st_hae_kaggle.ipynb` (`--device cuda`).
+dimensions + 2000-sample bootstrap CIs as §4/§7. Deterministic (seed 42). Trained on Kaggle
+(`notebooks/st_hae_kaggle.ipynb`; the assigned P100 GPU was incompatible with Kaggle's PyTorch
+build, so it auto-fell-back to CPU — results are deterministic and unaffected).
 
-**Ablation:** leave-one-pillar-out — `full` vs `no_spatial` / `no_temporal` / `no_hierarchical`,
-each with CIs, on both cities. *(Full ablation + NYC + CIs are produced by the Kaggle run;
-`results/st_hae_{chicago,nyc}.json`.)* 🔲
+### 5.1 Leave-one-pillar-out ablation (both cities, 95% bootstrap CIs)
 
-**Preliminary result (Chicago, single leakage-free run — to be confirmed by the Kaggle ablation):**
-the trained ST-HAE **beats RandomForest and narrows the robustness gaps it was built to expose**:
+| City | Model | RMSE | R² | temporal worst/best | high-dmd degrad. |
+|---|---|---|---|---|---|
+| **Chicago** | RandomForest | 35.10 | 0.9388 | 17.9× [12.6, 32.2] | +481% [377, 607] |
+| | ST-HAE full | 30.38 | 0.9541 | 7.0× [6.4, 14.6] | +355% [276, 449] |
+| | **ST-HAE −spatial** ⭐ | **28.08** | **0.9608** | 6.7× [6.4, 27.2] | +333% [188, 488] |
+| | ST-HAE −temporal | 35.56 | 0.9371 | 8.3× [6.0, 16.9] | +399% [288, 519] |
+| | ST-HAE −hierarchical | 30.24 | 0.9545 | 9.9× [8.1, 28.3] | +372% [271, 481] |
+| **NYC** | RandomForest | 268.0 | 0.9810 | 14.3× [11.3, 22.8] | +187% [135, 248] |
+| | ST-HAE full | 254.4 | 0.9829 | 10.1× [8.3, 14.8] | +239% [193, 292] |
+| | **ST-HAE −spatial** ⭐ | **192.3** | **0.9902** | 6.2× [5.7, 11.2] | +322% [242, 408] |
+| | ST-HAE −temporal | 285.9 | 0.9784 | 4.4× [3.7, 7.6] | +244% [193, 303] |
+| | ST-HAE −hierarchical | 274.4 | 0.9801 | 7.6× [6.3, 13.2] | +221% [171, 279] |
 
-| Model | RMSE | R² | temporal worst/best | high-dmd degradation |
-|---|---|---|---|---|
-| RandomForest | 35.10 | 0.9388 | 17.9× | +481% |
-| **ST-HAE (full)** ⚠️ | **30.04** | **0.9551** | **13.4×** | **+370%** |
+**Three findings replicate across both cities:**
+1. **Temporal attention is the essential pillar.** Removing it (`−temporal`) yields the *worst*
+   model in both cities — on Chicago it even drops below RandomForest (R² 0.9371 < 0.9388). The
+   learned temporal encoder does the heavy lifting.
+2. **⭐ The spatial GCN, as designed, HURTS — an honest negative result.** Removing it gives the
+   *best* model in both cities, substantially on NYC (RMSE 254→192, R² 0.983→0.990). The
+   demand-correlation graph over so few, coarse zones is near-complete (Chicago: 88 edges over 10
+   nodes), so the 2-layer GCN **over-smooths** — it averages the dominant zone's huge magnitude
+   (Manhattan ≈ 4000 trips/hr) into the small ones. Removing it even *raises* the tiny-zone per-zone
+   R² (NYC Staten Island −0.39 → −0.02; Manhattan 0.943 → 0.968).
+3. **The MoE head gives a small, consistent gain** (clearer on NYC: full 0.9829 vs `−hierarchical`
+   0.9801).
 
-This is the paper's arc closing: the robustness framework (§4) surfaced operational failures, and a
-model designed around them *measurably reduces* the temporal swing and tail degradation while
-improving aggregate accuracy — not just a headline-metric win. ⚠️ single run; the Kaggle ablation
-supplies CIs, component attribution, and the NYC replication.
+### 5.2 Recommended model and the paper's arc
+
+The recommended configuration is **ST-HAE−spatial (trained temporal attention + MoE head)**. It
+**beats the RandomForest baseline on both cities** (Chicago R² 0.9608 vs 0.9388; NYC 0.9902 vs
+0.9810) and — critically — **flattens the temporal error swing** the robustness framework surfaced
+(6–7× vs the baseline's 14–18×). So the arc still closes: §4 exposed operational failures, and a
+model motivated by them measurably reduces the largest one, while the honest ablation prevents us
+from over-claiming a component (spatial GCN) that does not earn its place at this spatial
+granularity.
+
+**Trade-off worth stating:** the spatial module is *not* worthless — on NYC the `full` model has a
+better high-demand degradation *ratio* than `−spatial` (+239% vs +322%), i.e. GCN smoothing spreads
+error more evenly across demand strata at a large aggregate-accuracy cost. Whether that trade is
+worth it is deployment-dependent; we report both.
 
 **Baselines:** RF / XGBoost / LightGBM / LSTM (Phase 0–1). Published ST-GNN baselines (**STGCN,
-Graph WaveNet**) are not yet implemented — noted as remaining work, not claimed. 🔲
+Graph WaveNet**) are not yet implemented — remaining work, not claimed. 🔲
+**Future work (motivated by finding 2):** re-run the GCN on the finer ~260 NYC TLC-zone grid
+(scheme already built, `--zone-scheme zone`) or with a *learned sparse* adjacency, where a spatial
+model may finally help. 🔲
 
 ## 6. LLM Explainability  🔲 (Phase 4)
 - Post-prediction natural-language explanation of failures.
