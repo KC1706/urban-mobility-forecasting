@@ -59,12 +59,17 @@ failure explanations we quantitatively validate against ground-truth error attri
 - **Splits:** chronological train/val/test, per-zone aware (Phase 0 utility). 🔲
 - Table: dataset statistics (trips, cells, features, demand distribution). 🔲
 
-## 4. Robustness Evaluation Framework  🔲 (Phase 2 — core contribution)
+## 4. Robustness Evaluation Framework  ✍️ (Phase 2 — core contribution; CIs + conformal done)
 - Four stress dimensions: spatial (per zone), temporal (per hour), stability (over time),
-  extreme events (demand strata).
-- 90th/95th percentile tail-error isolation; bootstrap CIs on per-zone/peak gaps;
-  conformal prediction for calibrated coverage.
-- Headline figures: per-zone R² collapse, hourly RMSE curve, demand-stratified degradation. 🔲
+  extreme events (demand strata) — `robustness_eval.py`.
+- **Statistical rigor (`robustness_ci.py`):** percentile **bootstrap CIs** (B=2000) on per-zone
+  R², the temporal worst/best-hour RMSE ratio, and high-demand degradation; **split-conformal**
+  prediction intervals with per-stratum empirical coverage (overall / peak / high-demand / zone).
+- Method value demonstrated: CIs *retract* the non-robust per-zone negative-R² claim and
+  *confirm* the temporal (17.9×) and high-demand (+481%) effects; conformal exposes the
+  calibration collapse (90%→9% coverage on high-demand). Rigor changes the conclusions.
+- Headline figures: hourly RMSE curve w/ CIs, demand-stratified degradation w/ CIs, per-stratum
+  conformal coverage bar. 🔲 (plots)
 
 ## 5. ST-HAE Model  🔲 (Phase 3 — critical path)
 - Architecture: zone-adjacency graph (proximity + demand correlation) → trained GCN
@@ -90,21 +95,22 @@ vs. the earlier *leaky* numbers (random split + train-on-all): RF RMSE 8.54 / R�
 MAPE 17.8%. Leakage inflated RMSE ~3.8× and halved MAPE — the "near-perfect" model was largely
 memorization. (ENGINEERING_LOG E-008/E-011.)
 
-**Robustness (RandomForest, real Chicago sides, corrected row alignment):**
-- *Per-zone:* aggregate R²=0.94 hides a genuinely **negative-R² zone — Far Southwest R²=−0.795**
-  (low-volume residential far-SW; model can't beat the mean), while dense zones reach 0.90.
-  Absolute error varies ~27× (Far Southeast RMSE 3.2 → Central/Loop 85.8; CV=1.2).
-  *(The earlier "Downtown R²=−2674" was an index-misalignment artifact (E-009), retracted;
-  the negative-R² finding now rests on a real, interpretable zone.)*
-- *Temporal:* worst/best hour RMSE ratio ≈ **15.3×** (hour 4: 3.69 → hour 15: 56.37).
-- *Extreme events:* high-demand RMSE degrades **+387%** vs normal.
-- *Robust across zone schemes:* synthetic-blocks vs real-sides give near-identical aggregate R²
-  (0.941 vs 0.939), temporal (15.8× vs 15.3×), and high-demand (+340% vs +387%) — the finding is
-  not an artifact of the grouping.
+**Robustness with 95% bootstrap CIs (RandomForest R²=0.939, real Chicago sides, held-out test):**
+- *Per-zone R² — claim retracted under rigor:* the smallest zone (Far Southwest) has
+  R²=−0.02 **[−1.32, 0.62]** — the CI is enormous and straddles zero, so a negative-R² claim is
+  **not statistically supported**. (The earlier −2674 and −0.795 point estimates were noise +
+  the E-009 index bug.) Honest reframing: performance in low-volume zones is *unmeasurable* with
+  this window — itself an operational caveat.
+- *Temporal error dispersion (robust):* worst/best-hour RMSE ratio **17.9× [12.6, 32.2]**.
+- *High-demand degradation (robust):* **+481% [377%, 607%]** vs normal demand.
+- *⭐ Calibration collapse (headline result):* a split-conformal interval calibrated to **90%**
+  coverage overall covers only **9.1%** of high-demand (≥p95) events and 80.7% at peak hours.
+  The model is *confidently wrong exactly when demand is high* — a crisp, quantitative failure
+  that a single global metric or interval hides.
 
-**Thesis (on real geography):** a strong aggregate R²=0.94 hides a negative-R² zone, a ~15×
-temporal error swing, and +387% high-demand degradation. Phase 2 adds bootstrap CIs + conformal
-coverage; the window extension + second city (NYC) are the remaining Phase 1 items.
+**Thesis (rigorous):** aggregate R²=0.94 conceals a ~18× temporal error swing, +481% high-demand
+degradation, and a calibration collapse (90%→9% coverage) on high-demand events. The dramatic
+per-zone R² numbers do not survive CIs and are dropped. Remaining Phase 1: longer window + NYC.
 
 ## 8. Discussion & Limitations  🔲
 - Aggregate metrics as a false comfort; operational deployment implications.

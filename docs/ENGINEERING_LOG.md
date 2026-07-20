@@ -187,7 +187,30 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   lag features; fix deferred LSTM predict-path bug.
 
 
-## Phase 2 — Robustness Layer, Made Rigorous  🔲 (not started)
+## Phase 2 — Robustness Layer, Made Rigorous (in progress)
+
+### E-013 · 2026-07-21 · [P2] ✅ Bootstrap CIs + conformal coverage; two claims retracted
+- Added `src/robustness_ci.py`: percentile bootstrap CIs (per-zone R², temporal ratio,
+  high-demand degradation) + split-conformal coverage per stratum. Tests in
+  `tests/test_robustness_ci.py` (5, green). Report: `results/phase2_robustness_ci.json`.
+- **Gotcha found & fixed (why R² read 0.84 not 0.94):** reading the CSV left `pickup_datetime`
+  as a *string*, so `prepare_features` label-encoded it into a feature with **inconsistent
+  train/test codes** → silently degraded the model. `experiment_runner.load_data` avoids this by
+  `pd.to_datetime(...)` (datetime64 gets dropped). Fixed the analysis script to parse it too;
+  R² then matched the headline 0.9388 exactly. *(Latent sharp edge in `prepare_features`: it
+  should drop/parse datetime-like string columns, not encode them.)*
+- **Rigor changed the conclusions:**
+  - *Retract* per-zone negative-R²: Far Southwest R²=−0.02 **[−1.32, 0.62]** — CI straddles 0,
+    not supported. (Confirms −2674/−0.795 were noise + the E-009 bug.)
+  - *Confirm* temporal dispersion **17.9× [12.6, 32.2]** and high-demand degradation
+    **+481% [377, 607]**.
+  - *New headline:* split-conformal @90% nominal covers only **9.1%** of high-demand events
+    (peak hours 80.7%) — calibration collapses exactly where it matters.
+- **Learning:** CIs are not decoration — they overturned the paper's most eye-catching claim
+  (negative per-zone R²) and promoted a stronger, defensible one (coverage collapse). Point
+  estimates on small strata were within noise.
+
+
 ## Phase 3 — ST-HAE: The Real Model  🔲 (not started)
 ## Phase 4 — LLM Explainability, Evaluated  🔲 (not started)
 ## Phase 5 — Synthesis & Release  🔲 (not started)
