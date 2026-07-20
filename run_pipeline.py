@@ -116,12 +116,18 @@ def main():
             summary = results['experiment_summary']
             print(f"✅ Components: {', '.join(summary['components_completed'])}")
         
-        # Key results
-        if 'baseline' in results and 'model_comparison' in results['baseline']:
-            print("\n🏆 Model Performance Summary:")
-            comparison_df = results['baseline']['model_comparison'] 
-            for _, row in comparison_df.iterrows():
-                print(f"  • {row['model']}: {row.get('rmse', row.get('cv_score', 'N/A'))}")
+        # Key results — report held-out TEST metrics (not CV score)
+        if 'baseline' in results and 'evaluation_results' in results['baseline']:
+            print("\n🏆 Model Performance (held-out test set):")
+            for model_name, res in results['baseline']['evaluation_results'].items():
+                if 'error' in res:
+                    print(f"  • {model_name}: ERROR ({res['error']})")
+                    continue
+                m = res.get('test_metrics', {})
+                print(f"  • {model_name}: RMSE={m.get('rmse', float('nan')):.3f} "
+                      f"MAE={m.get('mae', float('nan')):.3f} "
+                      f"R²={m.get('r2', float('nan')):.4f} "
+                      f"MAPE={m.get('mape', float('nan')):.1f}%")
         
         print("\n📖 Next Steps:")
         print("1. Review model performance in baseline results")

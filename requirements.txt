@@ -11,7 +11,7 @@ shapely==2.0.1
 # Machine learning (baselines)
 scikit-learn==1.3.2
 xgboost==2.0.3
-lightgbm==4.1.0
+lightgbm==4.6.0   # bumped from 4.1.0: no py3.11/arm64 wheel for 4.1.0 and its sdist fails to build under CMake 4.x
 imbalanced-learn==0.11.0
 
 # Deep learning (LSTM / future ST-HAE re-implementation)
@@ -32,6 +32,7 @@ plotly==5.17.0
 folium==0.14.0
 
 # Notebooks / tooling
+tabulate==0.9.0          # pandas .to_markdown() for robustness reports
 jupyter==1.0.0
 tqdm==4.66.1
 pytest==7.4.3

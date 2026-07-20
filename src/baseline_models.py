@@ -256,42 +256,81 @@ class BaselineModelTrainer:
             'scaler': scaler
         }
     
-    def prepare_lstm_data(self, data: pd.DataFrame, target_col: str, 
-                         sequence_length: int = 24, test_size: float = 0.2) -> Tuple:
+    def prepare_lstm_data(self, data: pd.DataFrame, target_col: str,
+                         sequence_length: int = 24, test_size: float = 0.2,
+                         group_col: str = 'pickup_borough') -> Tuple:
         """
-        Prepare data for LSTM training (time series format)
-        
+        Prepare data for LSTM training (time series format).
+
+        Builds look-back sequences *per spatial group* (borough/zone) so that a
+        single window never spans two zones, then applies a temporal train/test
+        split. Categorical and datetime columns are numerically encoded the same
+        way as prepare_features() — this fixes the previous failure where the
+        string column `pickup_borough` reached StandardScaler as object dtype.
+
         Args:
-            data: Time series data sorted by time
-            target_col: Target column name
-            sequence_length: Number of time steps to look back
-            test_size: Proportion of data for testing
-            
+            data: Time series data (one row per timestamp x zone).
+            target_col: Target column name.
+            sequence_length: Number of time steps to look back.
+            test_size: Proportion of *each group's* sequences held out (temporal tail).
+            group_col: Column identifying the spatial unit; sequences never cross it.
+
         Returns:
-            Tuple of (X_train, X_test, y_train, y_test)
+            Tuple of (X_train, X_test, y_train, y_test).
         """
-        # Ensure data is sorted by time
-        if 'pickup_datetime' in data.columns:
-            data = data.sort_values('pickup_datetime')
-        
-        # Prepare features and target
-        feature_cols = [col for col in data.columns if col != target_col and col != 'pickup_datetime']
-        features = data[feature_cols].values
-        target = data[target_col].values
-        
-        # Create sequences
-        X, y = [], []
-        for i in range(sequence_length, len(features)):
-            X.append(features[i-sequence_length:i])
-            y.append(target[i])
-        
-        X, y = np.array(X), np.array(y)
-        
-        # Split into train/test
-        split_idx = int(len(X) * (1 - test_size))
-        X_train, X_test = X[:split_idx], X[split_idx:]
-        y_train, y_test = y[:split_idx], y[split_idx:]
-        
+        df = data.copy()
+
+        # Sort chronologically within each spatial group.
+        sort_cols = [c for c in [group_col, 'pickup_datetime'] if c in df.columns]
+        if sort_cols:
+            df = df.sort_values(sort_cols)
+
+        # Feature columns: everything except the target and the raw datetime.
+        feature_cols = [c for c in df.columns if c not in (target_col, 'pickup_datetime')]
+
+        # Drop any remaining datetime columns (kept as engineered numeric features only).
+        datetime_cols = df[feature_cols].select_dtypes(include=['datetime64']).columns
+        if len(datetime_cols) > 0:
+            logger.info(f"LSTM: excluding datetime columns {list(datetime_cols)}")
+            feature_cols = [c for c in feature_cols if c not in datetime_cols]
+
+        # Label-encode categorical/object columns (mirrors prepare_features).
+        categorical_cols = df[feature_cols].select_dtypes(include=['object', 'category']).columns
+        for col in categorical_cols:
+            df[col] = LabelEncoder().fit_transform(df[col].astype(str))
+
+        # Handle missing values on the numeric feature matrix.
+        df[feature_cols] = df[feature_cols].fillna(df[feature_cols].mean())
+
+        # Build sequences independently per spatial group so windows don't cross zones.
+        groups = [g for _, g in df.groupby(group_col, sort=False)] if group_col in df.columns else [df]
+
+        X_train, X_test, y_train, y_test = [], [], [], []
+        for g in groups:
+            features = g[feature_cols].values.astype(np.float32)
+            target = g[target_col].values.astype(np.float32)
+            if len(features) <= sequence_length:
+                continue  # not enough history in this group to form a window
+
+            Xg, yg = [], []
+            for i in range(sequence_length, len(features)):
+                Xg.append(features[i - sequence_length:i])
+                yg.append(target[i])
+            Xg, yg = np.array(Xg), np.array(yg)
+
+            # Temporal split within the group (earliest -> train, latest -> test).
+            split_idx = int(len(Xg) * (1 - test_size))
+            X_train.append(Xg[:split_idx]); X_test.append(Xg[split_idx:])
+            y_train.append(yg[:split_idx]); y_test.append(yg[split_idx:])
+
+        if not X_train:
+            raise ValueError(
+                f"No LSTM sequences could be built: every group has <= {sequence_length} rows."
+            )
+
+        X_train = np.concatenate(X_train); X_test = np.concatenate(X_test)
+        y_train = np.concatenate(y_train); y_test = np.concatenate(y_test)
+
         return X_train, X_test, y_train, y_test
     
     def train_lstm(self, data: pd.DataFrame, target_col: str, **kwargs) -> Dict[str, Any]:

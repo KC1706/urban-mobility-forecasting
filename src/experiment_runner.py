@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from data_processor import MobilityDataProcessor
 from baseline_models import BaselineModelTrainer, compare_baseline_models
 from robustness_eval import RobustnessEvaluator
+from splits import temporal_split_indices
 
 # LLM modules - imported conditionally
 try:
@@ -132,22 +133,44 @@ class ExperimentRunner:
             Dictionary with baseline model results
         """
         logger.info("Starting baseline model experiments...")
-        
+
         # Initialize trainer
         trainer = BaselineModelTrainer(
             task_type=self.config.get('task_type', 'regression'),
             random_state=self.config['random_state']
         )
-        
-        # Train models
+
+        # --- Chronological split BEFORE training (fixes E-008 leakage / train-on-all) ---
+        # Models train only on the earliest rows and are evaluated on a strictly later,
+        # unseen test tail. `test_positions` are true positional indices into `data` so the
+        # robustness analysis (data.iloc[test_positions]) aligns with predictions (fixes E-009).
+        dt_col = self.config['datetime_column']
+        if dt_col in data.columns:
+            split_idx = temporal_split_indices(
+                data, dt_col, ratios=self.config.get('split_ratios', (0.7, 0.15, 0.15))
+            )
+            train_positions = np.concatenate([split_idx['train'], split_idx['val']])
+            test_positions = split_idx['test']
+        else:
+            logger.warning("No datetime column; falling back to a chronological row split")
+            n = len(data)
+            cut = int(n * (1 - self.config['test_size']))
+            train_positions, test_positions = np.arange(cut), np.arange(cut, n)
+
+        train_df = data.iloc[train_positions].copy()
+        test_df = data.iloc[test_positions].copy()
+        logger.info(f"Temporal split: train={len(train_df)} rows, test={len(test_df)} rows "
+                    f"(test is the latest {len(test_df)/len(data):.0%} of timestamps)")
+
+        # Train models on the TRAIN split only
         training_results = trainer.train_all_models(
-            data=data,
+            data=train_df,
             target_col=self.config['target_column'],
             models_to_train=self.config['models_to_train']
         )
-        
-        # Prepare test data for evaluation
-        test_data = self._prepare_test_data(data, trainer)
+
+        # Prepare held-out test data for evaluation (carries real indices for robustness)
+        test_data = self._prepare_test_data(train_df, test_df, trainer, test_positions)
         
         # Evaluate models
         evaluation_results = {}
@@ -190,54 +213,34 @@ class ExperimentRunner:
         logger.info("Baseline experiments completed")
         return baseline_results
     
-    def _prepare_test_data(self, data: pd.DataFrame, trainer: BaselineModelTrainer) -> Dict[str, Any]:
-        """Prepare test data for evaluation"""
-        
-        # For LSTM, we need time series splitting
-        if 'lstm' in self.config['models_to_train'] and self.config['datetime_column'] in data.columns:
-            # Sort by time for proper time series split
-            data_sorted = data.sort_values(self.config['datetime_column'])
-            
-            # Prepare LSTM data separately
-            lstm_data = trainer.prepare_lstm_data(
-                data_sorted, 
-                self.config['target_column'],
-                sequence_length=24,
-                test_size=self.config['test_size']
+    def _prepare_test_data(self, train_df: pd.DataFrame, test_df: pd.DataFrame,
+                           trainer: BaselineModelTrainer,
+                           test_positions: np.ndarray) -> Dict[str, Any]:
+        """Build evaluation tensors from explicit chronological train/test frames.
+
+        `test_positions` are positional indices into the ORIGINAL dataset, returned as
+        `test_indices` so the robustness analysis joins predictions to the correct rows.
+        """
+        target = self.config['target_column']
+        X_train, y_train = trainer.prepare_features(train_df, target)
+        X_test, y_test = trainer.prepare_features(test_df, target)
+
+        result = {
+            'X_train': X_train,
+            'X_test': X_test,
+            'y_train': y_train,
+            'y_test': y_test,
+            'test_indices': np.asarray(test_positions),
+        }
+
+        # LSTM keeps its own chronological, per-zone sequence split (prepare_lstm_data);
+        # it is not used for the row-aligned robustness join, only for its own metrics.
+        if 'lstm' in self.config['models_to_train'] and self.config['datetime_column'] in train_df.columns:
+            data_sorted = pd.concat([train_df, test_df]).sort_values(self.config['datetime_column'])
+            result['lstm_data'] = trainer.prepare_lstm_data(
+                data_sorted, target, sequence_length=24, test_size=self.config['test_size']
             )
-            
-            # Prepare regular ML data
-            X, y = trainer.prepare_features(data, self.config['target_column'])
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, 
-                test_size=self.config['test_size'], 
-                random_state=self.config['random_state']
-            )
-            
-            return {
-                'X_train': X_train,
-                'X_test': X_test, 
-                'y_train': y_train,
-                'y_test': y_test,
-                'lstm_data': lstm_data,
-                'test_indices': np.arange(len(X_test))
-            }
-        else:
-            # Standard train-test split
-            X, y = trainer.prepare_features(data, self.config['target_column'])
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y,
-                test_size=self.config['test_size'],
-                random_state=self.config['random_state']
-            )
-            
-            return {
-                'X_train': X_train,
-                'X_test': X_test,
-                'y_train': y_train,
-                'y_test': y_test,
-                'test_indices': np.arange(len(X_test))
-            }
+        return result
     
     def _get_model_predictions(self, model_name: str, trainer: BaselineModelTrainer, 
                              test_data: Dict[str, Any]) -> np.ndarray:
