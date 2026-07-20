@@ -98,12 +98,48 @@ in §7.
 - Headline figures: hourly RMSE curve w/ CIs, demand-stratified degradation w/ CIs, per-stratum
   conformal coverage bar. 🔲 (plots)
 
-## 5. ST-HAE Model  🔲 (Phase 3 — critical path)
-- Architecture: zone-adjacency graph (proximity + demand correlation) → trained GCN
-  (`torch_geometric`) → temporal `MultiheadAttention` → hierarchical ensemble head.
-- Training: end-to-end PyTorch, early stopping, per-zone temporal splits.
-- **Ablation:** spatial-only / temporal-only / hierarchical-only / full, with CIs.
-- Baselines: RF, XGBoost, LightGBM, LSTM, **STGCN, Graph WaveNet**.
+## 5. ST-HAE Model  ✍️ (Phase 3 — critical path; implemented + trained, ablation on Kaggle GPU)
+
+**From negative result to real model.** The original `st_hae_algorithm.py` prototype left every
+component *untrained* (fixed-identity "GCN", unlearned dot-product "attention", data-starving
+per-quantile sub-models) and honestly underperformed the baselines (R²≈0.43). We re-implemented it
+end-to-end in PyTorch (`src/st_hae.py`), keeping the four conceptual pillars but making each one
+*learned*:
+- **Spatial** — a trained Kipf-normalized graph convolution (2 layers) over zones. The adjacency
+  is built from *training-set* per-zone demand correlation (edge where ρ>0.3) + self-loops. Zones
+  are few (≤ dozens), so a dense GCN needs no `torch_geometric`.
+- **Temporal** — a trained 2-layer multi-head self-attention encoder over an L=24 h lookback window
+  (learned Q/K/V), replacing the prototype's raw-feature dot products.
+- **Hierarchical** — a learned **mixture-of-experts** head (3 experts + softmax gate). Unlike the
+  prototype's per-quantile data split, *all* data trains *all* experts end-to-end; the gate learns
+  the demand-regime specialization.
+- **Ensemble** — the MoE gate *is* the adaptive combination, trained jointly with everything else.
+
+**Training/eval.** End-to-end (Adam, grad-clip, early stopping on val RMSE), leakage-free
+chronological split (`splits.py`), per-zone standardized targets, masked to the cells observed in
+the processed CSV so **y_true is identical to the RandomForest baseline** in §7. Same robustness
+dimensions + bootstrap CIs as §4/§7. Deterministic (seed 42). Runs on GPU via the Kaggle notebook
+`notebooks/st_hae_kaggle.ipynb` (`--device cuda`).
+
+**Ablation:** leave-one-pillar-out — `full` vs `no_spatial` / `no_temporal` / `no_hierarchical`,
+each with CIs, on both cities. *(Full ablation + NYC + CIs are produced by the Kaggle run;
+`results/st_hae_{chicago,nyc}.json`.)* 🔲
+
+**Preliminary result (Chicago, single leakage-free run — to be confirmed by the Kaggle ablation):**
+the trained ST-HAE **beats RandomForest and narrows the robustness gaps it was built to expose**:
+
+| Model | RMSE | R² | temporal worst/best | high-dmd degradation |
+|---|---|---|---|---|
+| RandomForest | 35.10 | 0.9388 | 17.9× | +481% |
+| **ST-HAE (full)** ⚠️ | **30.04** | **0.9551** | **13.4×** | **+370%** |
+
+This is the paper's arc closing: the robustness framework (§4) surfaced operational failures, and a
+model designed around them *measurably reduces* the temporal swing and tail degradation while
+improving aggregate accuracy — not just a headline-metric win. ⚠️ single run; the Kaggle ablation
+supplies CIs, component attribution, and the NYC replication.
+
+**Baselines:** RF / XGBoost / LightGBM / LSTM (Phase 0–1). Published ST-GNN baselines (**STGCN,
+Graph WaveNet**) are not yet implemented — noted as remaining work, not claimed. 🔲
 
 ## 6. LLM Explainability  🔲 (Phase 4)
 - Post-prediction natural-language explanation of failures.

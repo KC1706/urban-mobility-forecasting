@@ -245,6 +245,40 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   suite 47 passed.
 
 
-## Phase 3 — ST-HAE: The Real Model  🔲 (not started)
+## Phase 3 — ST-HAE: The Real Model  ✍️ (implemented + trained; ablation on Kaggle GPU)
+
+### E-015 · 2026-07-21 · [P3] ✅ Trained ST-HAE (R² 0.43 → 0.955) beats RF and narrows the gaps
+- **What:** rebuilt the untrained prototype as a real end-to-end PyTorch model `src/st_hae.py`
+  (+`tests/test_st_hae.py`, 7 green). Four *learned* pillars: trained Kipf GCN over a
+  demand-correlation zone graph (no `torch_geometric` — zones are few, dense GCN suffices); trained
+  2-layer multi-head temporal self-attention over an L=24 lookback; a learned 3-expert
+  mixture-of-experts head (replaces the prototype's data-starving per-quantile split); MoE gate as
+  the adaptive ensemble. Masked, leakage-free eval on the *same* observed test cells as the RF
+  baseline; per-zone standardized targets; deterministic (seed 42).
+- **Preliminary finding (Chicago, one leakage-free run):** ST-HAE **full** RMSE=30.04, R²=0.9551,
+  temporal 13.4×, high-dmd +370% — vs RF RMSE=35.10, R²=0.9388, 17.9×, +481%. So the trained model
+  not only beats the baseline on aggregate accuracy but **reduces the temporal swing and tail
+  degradation the robustness framework surfaced** — the paper's arc closes. (Prototype was R²=0.43;
+  the fix was making every component *trained*, exactly as the honest negative-result note predicted.)
+- **Design decisions worth recording:**
+  - *Per-zone target standardization:* Manhattan (~4000/hr) vs Staten Island (~1/hr) means a raw-MSE
+    loss ignores small zones; z-scoring the target per zone gives every zone equal weight in the loss,
+    then invert + clip≥0 for eval on raw counts.
+  - *Masked loss/metrics:* the processed CSV has no explicit zero cells, so the grid is masked to
+    observed cells → y_true matches the RF baseline exactly (fair head-to-head).
+  - *Adjacency from train-only demand correlation* (ρ>0.3) to avoid leakage; nan-safe for
+    near-constant zones.
+- **Process note (IMPORTANT):** the user does **not** want training run on their laptop — training
+  moves to **Kaggle GPU**. Added `--device {auto,cuda,mps,cpu}` (auto = cuda>mps>cpu) and a
+  self-contained `notebooks/st_hae_kaggle.ipynb` that clones the repo (processed CSVs are committed,
+  so nothing to upload) and runs the full ablation on both cities on GPU, writing
+  `results/st_hae_{chicago,nyc}.json`. Only a single quick CPU smoke-test was run locally to verify
+  correctness (the 0.9551 number); the full ablation + CIs + NYC come from Kaggle.
+- **Learning:** the prototype's own honest self-critique was an exact spec for the fix — "trained GCN
+  + trained attention + end-to-end" was all it took to flip a −0.55 R² deficit into a +0.016 gain.
+  Keeping the eval *identical* to the baseline (same split, same masked cells) is what makes the
+  improvement claim defensible rather than an apples-to-oranges artifact.
+
+
 ## Phase 4 — LLM Explainability, Evaluated  🔲 (not started)
 ## Phase 5 — Synthesis & Release  🔲 (not started)

@@ -83,17 +83,22 @@ the Phase 1 data scale-up.
 - **Track B:** Robustness Framework methods + headline result figures (with CIs).
 
 ## Phase 3 — ST-HAE: The Real Model (Weeks 5–8) ⭐ critical path
-1. Zone-adjacency graph (proximity + demand correlation).
-2. Trained GCN (`torch_geometric.GCNConv`).
-3. Trained temporal attention (`torch.nn.MultiheadAttention`).
-4. End-to-end PyTorch training + early stopping.
-5. Honest ablation (spatial/temporal/hierarchical/full, with CIs).
-6. Comparison vs STGCN / Graph WaveNet.
+1. ✅ Zone-adjacency graph from train-set demand correlation (nan-safe, self-loops). (E-015)
+2. ✅ Trained dense Kipf GCN in plain PyTorch (no `torch_geometric` — zones are few). (E-015)
+3. ✅ Trained temporal multi-head self-attention encoder (L=24 lookback). (E-015)
+4. ✅ End-to-end training + early stopping; masked leakage-free eval == RF's test cells. (E-015)
+5. ✍️ Honest ablation (full vs no_spatial/no_temporal/no_hierarchical, with CIs) — **runs on
+   Kaggle GPU** (`notebooks/st_hae_kaggle.ipynb`, `--device cuda`); user is not training locally.
+6. 🔲 Comparison vs STGCN / Graph WaveNet (published ST-GNN baselines — remaining work).
+
+**Preliminary (Chicago, single run):** ST-HAE full R²=0.9551 vs RF 0.9388, and it *narrows* the
+temporal swing (13.4× vs 17.9×) and high-demand degradation (+370% vs +481%). The guardrail below
+is looking unnecessary, but keep the framing until the Kaggle ablation + NYC confirm it.
 
 **Guardrail:** if ST-HAE doesn't beat baselines, paper pivots to
 "robustness + explainability framework" as the contribution, ST-HAE as an honest ablation.
 
-**Track B:** ST-HAE architecture section + ablation/baseline tables.
+**Track B:** ST-HAE architecture section drafted (§5); ablation/baseline tables await Kaggle JSONs.
 
 ## Phase 4 — LLM Explainability, Evaluated (Weeks 8–9)
 - Ground-truth failure attribution (per-zone/per-hour causes).
