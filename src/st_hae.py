@@ -58,14 +58,31 @@ def _seed_everything(seed=SEED):
     torch.use_deterministic_algorithms(True, warn_only=True)
 
 
+def _device_executes(dev):
+    """True iff `dev` can actually launch a kernel (guards against e.g. Kaggle's P100 sm_60
+    being incompatible with a PyTorch build compiled only for sm_70+ -> cudaErrorNoKernelImage)."""
+    try:
+        _ = (torch.zeros(2, device=dev) + 1).sum().item()
+        return True
+    except Exception as e:                       # noqa: BLE001 — any accelerator failure -> fall back
+        logger.info(f"  device {dev!r} unusable ({type(e).__name__}: {str(e)[:80]}); falling back")
+        return False
+
+
 def resolve_device(name="auto"):
-    """Resolve 'auto' -> cuda > mps > cpu; otherwise honor the requested device."""
-    if name != "auto":
-        return name
-    if torch.cuda.is_available():
-        return "cuda"
-    if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
-        return "mps"
+    """Resolve to a device that actually works. 'auto' tries cuda>mps>cpu; an explicit accelerator
+    is honored only if it can launch a kernel, else falls back to cpu (never hard-fails)."""
+    candidates = []
+    if name == "auto":
+        if torch.cuda.is_available():
+            candidates.append("cuda")
+        if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
+            candidates.append("mps")
+    elif name != "cpu":
+        candidates.append(name)
+    for dev in candidates:
+        if _device_executes(dev):
+            return dev
     return "cpu"
 
 
