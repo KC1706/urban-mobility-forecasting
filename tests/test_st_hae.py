@@ -99,3 +99,34 @@ def test_no_hierarchical_uses_single_expert():
     assert m.n_experts == 1
     m2 = STHAE(g["N"], len(DYN_CHANNELS), 7, use_hierarchical=True)
     assert m2.n_experts == 3
+
+
+@pytest.mark.parametrize("adj_mode", ["corr", "adaptive", "adaptive_sparse"])
+def test_learned_adjacency_modes_forward_and_shape(adj_mode):
+    g = build_grid(_toy_df())
+    mu, sd, fmu, fsd = _standardizers(g, np.ones(g["T"], bool))
+    arr = prepare_arrays(g, 12, mu, sd, fmu, fsd, "cpu")
+    hist, cal, y, m = gather_batch(arr, np.array([12, 13, 14, 15]), L=12)
+    A = torch.tensor(build_adjacency(g["demand"], g["mask"]))
+    model = STHAE(g["N"], len(DYN_CHANNELS), g["cal"].shape[1], adj_mode=adj_mode, adj_topk=2)
+    out = model(hist, cal, A, torch.arange(g["N"]))
+    assert out.shape == (4, g["N"]) and torch.isfinite(out).all()
+    # learned adjacency should be row-stochastic; sparse keeps <= topk nonzeros per row
+    A_used = model._adjacency(A)
+    if adj_mode == "adaptive_sparse":
+        assert int((A_used[0] > 0).sum()) <= 2
+
+
+def test_adaptive_modes_have_learned_embeddings():
+    g = build_grid(_toy_df())
+    plain = dict(STHAE(g["N"], len(DYN_CHANNELS), 7, adj_mode="corr").named_parameters())
+    adap = dict(STHAE(g["N"], len(DYN_CHANNELS), 7, adj_mode="adaptive").named_parameters())
+    assert "e1" not in plain and "e1" in adap and "e2" in adap
+
+
+def test_distance_adjacency_degenerate_returns_none():
+    from st_hae import build_distance_adjacency
+    import numpy as np
+    # all-identical coordinates (like the fine grid's borough-level centroids) -> unusable
+    assert build_distance_adjacency(np.tile([40.7, -73.9], (6, 1)), k=4) is None
+    assert build_distance_adjacency(np.array([[np.nan, 1.0], [2.0, 3.0], [4.0, 5.0]])) is None

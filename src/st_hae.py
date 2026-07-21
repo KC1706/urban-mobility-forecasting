@@ -134,11 +134,48 @@ def build_adjacency(demand_train, mask_train):
         corr = pd.DataFrame(d).corr().to_numpy()
     corr = np.nan_to_num(corr, nan=0.0)
     A = (corr > 0.3).astype(np.float32)          # edge where demand correlation > 0.3
+    return _kipf_normalize(A)
+
+
+def _kipf_normalize(A):
+    """D^-1/2 (A+I) D^-1/2 with self-loops added."""
+    N = A.shape[0]
+    A = A.astype(np.float32).copy()
     np.fill_diagonal(A, 0.0)
-    A = A + np.eye(N, dtype=np.float32)          # self loops
+    A = A + np.eye(N, dtype=np.float32)
     deg = A.sum(1)
     dinv = np.diag(1.0 / np.sqrt(np.maximum(deg, 1e-8)))
-    return (dinv @ A @ dinv).astype(np.float32)  # D^-1/2 (A+I) D^-1/2
+    return (dinv @ A @ dinv).astype(np.float32)
+
+
+def zone_centroids(df, grid, zone_col="pickup_borough"):
+    """Per-zone mean (lat, lon) in grid-zone order; NaN row if a zone has no coordinates."""
+    m = (df.groupby(zone_col)[["pickup_latitude", "pickup_longitude"]].mean()
+         .reindex(grid["zones"]))
+    return m.to_numpy(dtype=np.float64)
+
+
+def build_distance_adjacency(centroids, k=4):
+    """Sparse geographic adjacency: k-nearest-neighbour graph on zone centroids (great-circle-ish
+    Euclidean on lat/lon), Gaussian-weighted, symmetrized, Kipf-normalized. Returns None if
+    centroids are unusable (missing, or degenerate — e.g. the fine grid where all zones in a borough
+    share a borough centroid, giving < k distinct points)."""
+    C = np.asarray(centroids, float)
+    if np.isnan(C).any():
+        return None
+    N = len(C)
+    n_distinct = len({tuple(np.round(c, 6)) for c in C})
+    if N < 3 or n_distinct <= k:                 # too few / degenerate coordinates
+        return None
+    d2 = ((C[:, None, :] - C[None, :, :]) ** 2).sum(-1)
+    np.fill_diagonal(d2, np.inf)
+    sigma2 = np.median(d2[np.isfinite(d2)]) + 1e-9
+    A = np.zeros((N, N), np.float32)
+    for i in range(N):                           # keep k nearest neighbours per node
+        nn_idx = np.argsort(d2[i])[:k]
+        A[i, nn_idx] = np.exp(-d2[i, nn_idx] / sigma2)
+    A = np.maximum(A, A.T)                        # symmetrize
+    return _kipf_normalize(A)
 
 
 # --------------------------------------------------------------------------------------
@@ -154,20 +191,36 @@ class GCNLayer(nn.Module):
         return torch.einsum("nm,bmd->bnd", A, self.lin(H))
 
 
+def _renorm(A, eps=1e-8):
+    """Row-normalize a non-negative adjacency (so GCN mixing is a convex combination per node)."""
+    return A / (A.sum(-1, keepdim=True) + eps)
+
+
 class STHAE(nn.Module):
+    """adj_mode controls the spatial GCN's graph (only used when use_spatial=True):
+        'corr'/'distance' -> use the fixed A passed in (built in run(): demand-correlation or
+                             centroid-distance kNN);
+        'adaptive'        -> a LEARNED dense adjacency from node embeddings (Graph-WaveNet style);
+        'adaptive_sparse' -> the learned adjacency, top-k per row then renormalized (learned SPARSE).
+    """
     def __init__(self, n_zones, c_dyn, c_cal, d_model=64, n_heads=4, n_experts=3,
-                 use_spatial=True, use_temporal=True, use_hierarchical=True):
+                 use_spatial=True, use_temporal=True, use_hierarchical=True,
+                 adj_mode="corr", adj_emb=10, adj_topk=8):
         super().__init__()
         self.use_spatial, self.use_temporal, self.use_hierarchical = \
             use_spatial, use_temporal, use_hierarchical
+        self.adj_mode, self.adj_topk = adj_mode, adj_topk
         self.in_proj = nn.Linear(c_dyn, d_model)
         # (1) temporal self-attention encoder over the lookback window
         enc = nn.TransformerEncoderLayer(d_model, n_heads, dim_feedforward=2 * d_model,
                                          batch_first=True, dropout=0.1)
         self.temporal = nn.TransformerEncoder(enc, num_layers=2)
-        # (2) spatial GCN over zones
+        # (2) spatial GCN over zones (+ learned adjacency embeddings for adaptive modes)
         self.gcn1 = GCNLayer(d_model, d_model)
         self.gcn2 = GCNLayer(d_model, d_model)
+        if adj_mode in ("adaptive", "adaptive_sparse"):
+            self.e1 = nn.Parameter(torch.randn(n_zones, adj_emb) * 0.05)
+            self.e2 = nn.Parameter(torch.randn(n_zones, adj_emb) * 0.05)
         self.zone_emb = nn.Embedding(n_zones, 16)
         self.cal_proj = nn.Linear(c_cal, 16)
         fuse_dim = d_model + 16 + 16
@@ -177,6 +230,17 @@ class STHAE(nn.Module):
         self.experts = nn.ModuleList([
             nn.Sequential(nn.Linear(fuse_dim, d_model), nn.ReLU(), nn.Linear(d_model, 1))
             for _ in range(self.n_experts)])
+
+    def _adjacency(self, A_fixed):
+        """Resolve the adjacency actually used by the GCN for this forward pass."""
+        if self.adj_mode not in ("adaptive", "adaptive_sparse"):
+            return A_fixed                                    # fixed: corr / distance
+        A = torch.softmax(torch.relu(self.e1 @ self.e2.t()), dim=1)   # learned dense [N,N]
+        if self.adj_mode == "adaptive_sparse":
+            k = min(self.adj_topk, A.shape[-1])
+            val, idx = A.topk(k, dim=-1)
+            A = _renorm(torch.zeros_like(A).scatter(-1, idx, val))    # learned top-k SPARSE
+        return A
 
     def forward(self, hist, cal, A, zone_ids):
         # hist:[B,N,L,C]  cal:[B,Ccal]  A:[N,N]  zone_ids:[N]
@@ -188,8 +252,9 @@ class STHAE(nn.Module):
             h = h.mean(1)                                     # ablation: mean-pool over lags
         H = h.reshape(B, N, -1)                               # [B,N,d]
         if self.use_spatial:
-            H = torch.relu(self.gcn1(H, A))
-            H = torch.relu(self.gcn2(H, A))                   # trained GCN
+            A_use = self._adjacency(A)
+            H = torch.relu(self.gcn1(H, A_use))
+            H = torch.relu(self.gcn2(H, A_use))               # trained GCN
         z = self.zone_emb(zone_ids).unsqueeze(0).expand(B, -1, -1)   # [B,N,16]
         c = self.cal_proj(cal).unsqueeze(1).expand(-1, N, -1)        # [B,N,16]
         fuse = torch.cat([H, z, c], dim=-1)                          # [B,N,fuse]
@@ -231,20 +296,36 @@ def _standardizers(grid, train_t):
     return mu, sd, fmu.astype(np.float32), fsd.astype(np.float32)
 
 
-STHAE_FLAGS = {"full": (1, 1, 1), "no_spatial": (0, 1, 1),
-               "no_temporal": (1, 0, 1), "no_hierarchical": (1, 1, 0)}
-ALL_VARIANTS = list(STHAE_FLAGS) + ["stgcn", "gwn"]
+# ST-HAE variant -> (use_spatial, use_temporal, use_hierarchical, adj_mode).
+STHAE_SPEC = {
+    "full":                 (1, 1, 1, "corr"),       # spatial GCN on demand-correlation graph
+    "no_spatial":           (0, 1, 1, "corr"),
+    "no_temporal":          (1, 0, 1, "corr"),
+    "no_hierarchical":      (1, 1, 0, "corr"),
+    "full_distance":        (1, 1, 1, "distance"),        # geographic kNN adjacency
+    "full_adaptive":        (1, 1, 1, "adaptive"),        # learned dense adjacency
+    "full_adaptive_sparse": (1, 1, 1, "adaptive_sparse"), # learned top-k SPARSE adjacency
+}
+ALL_VARIANTS = list(STHAE_SPEC) + ["stgcn", "gwn"]
+
+
+def variant_adj_mode(variant):
+    """Which fixed adjacency (if any) a variant consumes: 'corr', 'distance', or None (learned)."""
+    if variant in STHAE_SPEC:
+        mode = STHAE_SPEC[variant][3]
+        return mode if mode in ("corr", "distance") else None
+    return "corr"                                    # baselines use the fixed corr adjacency
 
 
 def build_model(variant, grid, device):
-    """Model factory. ST-HAE ablation variants + published ST-GNN baselines share the forward
-    signature (hist[B,N,L,C], cal[B,Ccal], A[N,N], zone_ids[N]) -> [B,N], so the identical
+    """Model factory. ST-HAE ablation/adjacency variants + published ST-GNN baselines share the
+    forward signature (hist[B,N,L,C], cal[B,Ccal], A[N,N], zone_ids[N]) -> [B,N], so the identical
     training/eval harness gives a fair, apples-to-apples comparison on the same masked test cells."""
     N, c_dyn, c_cal = grid["N"], len(DYN_CHANNELS), grid["cal"].shape[1]
-    if variant in STHAE_FLAGS:
-        s, t, h = STHAE_FLAGS[variant]
+    if variant in STHAE_SPEC:
+        s, t, h, adj = STHAE_SPEC[variant]
         return STHAE(N, c_dyn, c_cal, use_spatial=bool(s), use_temporal=bool(t),
-                     use_hierarchical=bool(h)).to(device)
+                     use_hierarchical=bool(h), adj_mode=adj).to(device)
     if variant == "stgcn":
         return STGCN(N, c_dyn, c_cal).to(device)
     if variant == "gwn":
@@ -299,8 +380,8 @@ def _predict(model, arr, A_t, zone_ids, idx, L, bs=128):
 
 
 def train_variant(grid, A, splits, L, variant, device="cpu", epochs=120, patience=18, lr=1e-3,
-                  bs=64):
-    _seed_everything()
+                  bs=64, seed=SEED):
+    _seed_everything(seed)
     mu, sd, fmu, fsd = _standardizers(grid, splits == "train")
     arr = prepare_arrays(grid, L, mu, sd, fmu, fsd, device)
     targets = np.arange(L, grid["T"])
@@ -368,31 +449,56 @@ def robustness_summary(y_true, y_pred, hours, zones, B=2000):
             "high_demand_degradation_ci": ci(high), "per_zone_r2_ci": per_zone}
 
 
-def run(data_path, out=None, variants=None, L=24, device="auto", B=2000):
+def _overall(y_true, y_pred):
+    return {"rmse": rci._rmse(y_true, y_pred), "r2": rci._r2(y_true, y_pred),
+            "mae": float(np.mean(np.abs(y_true - y_pred))), "n_test": int(len(y_true))}
+
+
+def run(data_path, out=None, variants=None, L=24, device="auto", B=2000, seeds=(SEED,)):
     if variants is None:
         variants = ["full"]
+    seeds = list(seeds)
     _seed_everything()
     device = resolve_device(device)
-    logger.info(f"Device: {device}")
+    logger.info(f"Device: {device} | seeds={seeds}")
     df = pd.read_csv(data_path)
     grid = build_grid(df)
     splits = _split_time_masks(df, grid)
-    A = build_adjacency(grid["demand"][splits == "train"], grid["mask"][splits == "train"])
-    logger.info(f"Grid: T={grid['T']} x N={grid['N']} zones ({', '.join(map(str, grid['zones']))}); "
-                f"lookback L={L}; adjacency edges={int((A > 0).sum() - grid['N'])}")
+    A_corr = build_adjacency(grid["demand"][splits == "train"], grid["mask"][splits == "train"])
+    A_dist = build_distance_adjacency(zone_centroids(df, grid))
+    adjacencies = {"corr": A_corr, "distance": A_dist, None: A_corr}  # None (learned) ignores it
+    logger.info(f"Grid: T={grid['T']} x N={grid['N']} zones; lookback L={L}; "
+                f"corr-edges={int((A_corr > 0).sum() - grid['N'])}; "
+                f"distance-adj={'built' if A_dist is not None else 'unavailable (degenerate centroids)'}")
 
     results = {}
     for v in variants:
-        logger.info(f"\n=== Training [{v}] ===")
-        r = train_variant(grid, A, splits, L, v, device=device)
-        summ = robustness_summary(r["y_true"], r["y_pred"], r["hours"], r["zones"], B=B)
-        summ.update({"n_params": r["n_params"], "epochs_trained": r["epochs_trained"]})
+        adj = variant_adj_mode(v)
+        if adj == "distance" and adjacencies["distance"] is None:
+            logger.info(f"\n=== Skipping [{v}] — no usable geographic centroids on this grid ===")
+            continue
+        A = adjacencies[adj]
+        logger.info(f"\n=== Training [{v}] over {len(seeds)} seed(s) ===")
+        per_seed, ref = [], None
+        for si, sd_ in enumerate(seeds):
+            r = train_variant(grid, A, splits, L, v, device=device, seed=sd_)
+            ov = _overall(r["y_true"], r["y_pred"])
+            per_seed.append(ov)
+            logger.info(f"    seed {sd_}: RMSE={ov['rmse']:.2f} R²={ov['r2']:.4f} "
+                        f"MAE={ov['mae']:.2f} ({r['epochs_trained']} ep)")
+            if si == 0:
+                ref = r                                   # robustness CIs computed on first seed
+        summ = robustness_summary(ref["y_true"], ref["y_pred"], ref["hours"], ref["zones"], B=B)
+        summ.update({"n_params": ref["n_params"], "n_seeds": len(seeds), "per_seed_overall": per_seed})
+        if len(seeds) > 1:                                # mean ± std of the headline metrics
+            for k in ("rmse", "r2", "mae"):
+                vals = np.array([s[k] for s in per_seed], float)
+                summ[f"{k}_mean"], summ[f"{k}_std"] = float(vals.mean()), float(vals.std(ddof=1))
         results[v] = summ
         o = summ["overall"]
-        logger.info(f"  {v:16s} RMSE={o['rmse']:.2f} R²={o['r2']:.4f} MAE={o['mae']:.2f} "
-                    f"| temporal={summ['temporal_ratio_ci'][0]}x "
-                    f"high-dmd={summ['high_demand_degradation_ci'][0]}% "
-                    f"({r['n_params']:,} params, {r['epochs_trained']} ep)")
+        extra = (f" | R²={summ['r2_mean']:.4f}±{summ['r2_std']:.4f} over {len(seeds)} seeds"
+                 if len(seeds) > 1 else "")
+        logger.info(f"  {v:20s} RMSE={o['rmse']:.2f} R²={o['r2']:.4f}{extra}")
 
     # RandomForest baseline on the identical split/test cells (from robustness_ci).
     logger.info("\n=== RandomForest baseline (same split) ===")
@@ -418,14 +524,15 @@ def _print_table(o):
     print("\n" + "=" * 78)
     print(f"MODELS vs BASELINE  ({Path(o['data']).name}, leakage-free test)")
     print("=" * 78)
-    print(f"{'Model':22s} {'RMSE':>8s} {'R²':>8s} {'MAE':>8s} {'temporal':>10s} {'high-dmd':>10s}")
+    print(f"{'Model':22s} {'RMSE':>8s} {'R²':>8s} {'R²(mean±std)':>18s} {'temporal':>9s} {'high-dmd':>9s}")
     rf = o["random_forest"]
     print(f"{'RandomForest':22s} {rf['overall']['rmse']:8.2f} {rf['overall']['r2']:8.4f} "
-          f"{'—':>8s} {rf['temporal_ratio_ci'][0]:9.1f}x {rf['high_demand_degradation_ci'][0]:9.0f}%")
+          f"{'—':>18s} {rf['temporal_ratio_ci'][0]:8.1f}x {rf['high_demand_degradation_ci'][0]:8.0f}%")
     for v, s in o["models"].items():
         ov = s["overall"]
-        print(f"{v:22s} {ov['rmse']:8.2f} {ov['r2']:8.4f} {ov['mae']:8.2f} "
-              f"{s['temporal_ratio_ci'][0]:9.1f}x {s['high_demand_degradation_ci'][0]:9.0f}%")
+        ms = (f"{s['r2_mean']:.4f}±{s['r2_std']:.4f}" if "r2_mean" in s else "—")
+        print(f"{v:22s} {ov['rmse']:8.2f} {ov['r2']:8.4f} {ms:>18s} "
+              f"{s['temporal_ratio_ci'][0]:8.1f}x {s['high_demand_degradation_ci'][0]:8.0f}%")
     print("=" * 78)
 
 
@@ -439,10 +546,14 @@ def main():
     ap.add_argument("--variants", default=None,
                     help="comma list overriding --ablation/--baselines "
                          f"(any of: {','.join(ALL_VARIANTS)})")
+    ap.add_argument("--adjacency", action="store_true",
+                    help="spatial-rescue attempt: full + no_spatial + full_distance/adaptive/adaptive_sparse")
     ap.add_argument("--lookback", type=int, default=24)
     ap.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda", "mps"],
                     help="'auto' picks cuda>mps>cpu (use 'cuda' on Kaggle GPU)")
     ap.add_argument("--B", type=int, default=2000)
+    ap.add_argument("--seeds", type=int, default=1,
+                    help="train each variant over this many seeds (42..42+n-1) for mean±std")
     args = ap.parse_args()
     if args.variants:
         variants = [v.strip() for v in args.variants.split(",") if v.strip()]
@@ -450,9 +561,13 @@ def main():
         variants = ["full"]
         if args.ablation:
             variants += ["no_spatial", "no_temporal", "no_hierarchical"]
+        if args.adjacency:
+            variants += ["no_spatial", "full_distance", "full_adaptive", "full_adaptive_sparse"]
         if args.baselines:
             variants += ["stgcn", "gwn"]
-    run(args.data, out=args.out, variants=variants, L=args.lookback, device=args.device, B=args.B)
+    variants = list(dict.fromkeys(variants))                 # de-dup, keep order
+    run(args.data, out=args.out, variants=variants, L=args.lookback, device=args.device,
+        B=args.B, seeds=list(range(SEED, SEED + args.seeds)))
 
 
 if __name__ == "__main__":
