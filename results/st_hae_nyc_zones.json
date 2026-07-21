@@ -1,0 +1,4872 @@
+{
+  "data": "data/processed/nyc_taxi_zones.csv.gz",
+  "lookback_L": 24,
+  "device": "cuda",
+  "random_forest": {
+    "overall": {
+      "rmse": 45.17201983315421,
+      "r2": 0.6383192504095416,
+      "n_test": 78904
+    },
+    "temporal_ratio_ci": [
+      8.948341968171972,
+      8.138645830987905,
+      10.127317883529647
+    ],
+    "high_demand_degradation_ci": [
+      289.70280937557004,
+      278.61314945076214,
+      301.5205430689108
+    ]
+  },
+  "models": {
+    "full": {
+      "overall": {
+        "rmse": 15.905630111694336,
+        "r2": 0.9551576972007751,
+        "mae": 6.858014106750488,
+        "n_test": 78904
+      },
+      "temporal_ratio_ci": [
+        4.839,
+        4.552,
+        5.409
+      ],
+      "high_demand_degradation_ci": [
+        302.006,
+        286.854,
+        317.621
+      ],
+      "per_zone_r2_ci": {
+        "Allerton/Pelham Gardens": [
+          -0.124,
+          -0.25,
+          -0.036
+        ],
+        "Alphabet City": [
+          0.771,
+          0.669,
+          0.83
+        ],
+        "Arrochar/Fort Wadsworth": [
+          -0.036,
+          -0.152,
+          0.011
+        ],
+        "Astoria": [
+          0.228,
+          0.168,
+          0.291
+        ],
+        "Astoria Park": [
+          -0.125,
+          -0.286,
+          -0.039
+        ],
+        "Auburndale": [
+          0.042,
+          -0.374,
+          0.072
+        ],
+        "Baisley Park": [
+          0.086,
+          0.01,
+          0.149
+        ],
+        "Bath Beach": [
+          -0.067,
+          -0.569,
+          0.03
+        ],
+        "Battery Park": [
+          0.365,
+          0.291,
+          0.435
+        ],
+        "Battery Park City": [
+          0.834,
+          0.808,
+          0.859
+        ],
+        "Bay Ridge": [
+          0.113,
+          0.059,
+          0.167
+        ],
+        "Bay Terrace/Fort Totten": [
+          -0.078,
+          -0.237,
+          0.011
+        ],
+        "Bayside": [
+          -0.032,
+          -0.216,
+          0.05
+        ],
+        "Bedford": [
+          0.148,
+          0.08,
+          0.226
+        ],
+        "Bedford Park": [
+          -0.035,
+          -0.132,
+          0.041
+        ],
+        "Bellerose": [
+          -0.075,
+          -0.146,
+          -0.026
+        ],
+        "Belmont": [
+          -0.014,
+          -0.077,
+          0.03
+        ],
+        "Bensonhurst East": [
+          -0.065,
+          -0.179,
+          0.012
+        ],
+        "Bensonhurst West": [
+          0.105,
+          0.024,
+          0.166
+        ],
+        "Bloomfield/Emerson Hill": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Bloomingdale": [
+          0.634,
+          0.57,
+          0.687
+        ],
+        "Boerum Hill": [
+          0.407,
+          0.318,
+          0.481
+        ],
+        "Borough Park": [
+          0.02,
+          -0.048,
+          0.074
+        ],
+        "Breezy Point/Fort Tilden/Riis Beach": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Briarwood/Jamaica Hills": [
+          0.042,
+          -0.092,
+          0.133
+        ],
+        "Brighton Beach": [
+          0.135,
+          -0.063,
+          0.267
+        ],
+        "Bronx Park": [
+          -0.14,
+          -0.324,
+          0.003
+        ],
+        "Bronxdale": [
+          0.013,
+          -0.084,
+          0.087
+        ],
+        "Brooklyn Heights": [
+          0.253,
+          0.175,
+          0.324
+        ],
+        "Brooklyn Navy Yard": [
+          0.24,
+          -0.048,
+          0.355
+        ],
+        "Brownsville": [
+          0.354,
+          0.267,
+          0.434
+        ],
+        "Bushwick North": [
+          0.496,
+          0.379,
+          0.587
+        ],
+        "Bushwick South": [
+          0.36,
+          0.232,
+          0.444
+        ],
+        "Cambria Heights": [
+          -0.003,
+          -0.091,
+          0.082
+        ],
+        "Canarsie": [
+          0.3,
+          0.182,
+          0.394
+        ],
+        "Carroll Gardens": [
+          0.216,
+          0.069,
+          0.331
+        ],
+        "Central Harlem": [
+          0.599,
+          0.525,
+          0.661
+        ],
+        "Central Harlem North": [
+          0.483,
+          0.384,
+          0.565
+        ],
+        "Central Park": [
+          0.826,
+          0.78,
+          0.862
+        ],
+        "Chinatown": [
+          0.579,
+          0.508,
+          0.638
+        ],
+        "City Island": [
+          -0.144,
+          -0.374,
+          -0.038
+        ],
+        "Claremont/Bathgate": [
+          -0.065,
+          -0.146,
+          -0.002
+        ],
+        "Clinton East": [
+          0.876,
+          0.854,
+          0.895
+        ],
+        "Clinton Hill": [
+          0.219,
+          0.135,
+          0.307
+        ],
+        "Clinton West": [
+          0.678,
+          0.633,
+          0.719
+        ],
+        "Co-Op City": [
+          0.056,
+          -0.18,
+          0.235
+        ],
+        "Cobble Hill": [
+          0.314,
+          0.143,
+          0.438
+        ],
+        "College Point": [
+          -0.016,
+          -0.441,
+          0.08
+        ],
+        "Columbia Street": [
+          -0.035,
+          -0.137,
+          0.064
+        ],
+        "Coney Island": [
+          0.03,
+          -0.041,
+          0.088
+        ],
+        "Corona": [
+          0.009,
+          -0.019,
+          0.062
+        ],
+        "Country Club": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Crotona Park East": [
+          -0.012,
+          -0.091,
+          0.058
+        ],
+        "Crown Heights North": [
+          0.266,
+          0.177,
+          0.359
+        ],
+        "Crown Heights South": [
+          0.024,
+          -0.073,
+          0.104
+        ],
+        "Cypress Hills": [
+          0.008,
+          -0.072,
+          0.086
+        ],
+        "DUMBO/Vinegar Hill": [
+          0.241,
+          0.182,
+          0.299
+        ],
+        "Douglaston": [
+          -0.288,
+          -1.278,
+          -0.049
+        ],
+        "Downtown Brooklyn/MetroTech": [
+          0.354,
+          0.282,
+          0.421
+        ],
+        "Dyker Heights": [
+          -0.05,
+          -0.144,
+          0.007
+        ],
+        "East Chelsea": [
+          0.898,
+          0.879,
+          0.913
+        ],
+        "East Concourse/Concourse Village": [
+          0.023,
+          -0.091,
+          0.118
+        ],
+        "East Elmhurst": [
+          0.51,
+          0.442,
+          0.572
+        ],
+        "East Flatbush/Farragut": [
+          0.202,
+          0.129,
+          0.271
+        ],
+        "East Flatbush/Remsen Village": [
+          0.245,
+          0.16,
+          0.319
+        ],
+        "East Flushing": [
+          -0.009,
+          -0.109,
+          0.048
+        ],
+        "East Harlem North": [
+          0.64,
+          0.58,
+          0.692
+        ],
+        "East Harlem South": [
+          0.823,
+          0.793,
+          0.85
+        ],
+        "East New York": [
+          0.329,
+          0.238,
+          0.405
+        ],
+        "East New York/Pennsylvania Avenue": [
+          0.009,
+          -0.081,
+          0.077
+        ],
+        "East Tremont": [
+          0.02,
+          -0.07,
+          0.088
+        ],
+        "East Village": [
+          0.924,
+          0.9,
+          0.942
+        ],
+        "East Williamsburg": [
+          0.523,
+          0.45,
+          0.602
+        ],
+        "Eastchester": [
+          -0.022,
+          -0.167,
+          0.021
+        ],
+        "Elmhurst": [
+          0.164,
+          0.032,
+          0.266
+        ],
+        "Elmhurst/Maspeth": [
+          0.051,
+          -0.092,
+          0.175
+        ],
+        "Erasmus": [
+          -0.007,
+          -0.092,
+          0.063
+        ],
+        "Far Rockaway": [
+          0.074,
+          -0.025,
+          0.163
+        ],
+        "Financial District North": [
+          0.766,
+          0.73,
+          0.798
+        ],
+        "Financial District South": [
+          0.722,
+          0.676,
+          0.764
+        ],
+        "Flatbush/Ditmas Park": [
+          0.219,
+          0.097,
+          0.314
+        ],
+        "Flatiron": [
+          0.886,
+          0.866,
+          0.904
+        ],
+        "Flatlands": [
+          0.429,
+          0.278,
+          0.533
+        ],
+        "Flushing": [
+          0.171,
+          0.041,
+          0.284
+        ],
+        "Flushing Meadows-Corona Park": [
+          0.158,
+          0.08,
+          0.216
+        ],
+        "Fordham South": [
+          0.007,
+          -0.07,
+          0.091
+        ],
+        "Forest Hills": [
+          0.115,
+          0.052,
+          0.211
+        ],
+        "Forest Park/Highland Park": [
+          -0.05,
+          -0.167,
+          -0.05
+        ],
+        "Fort Greene": [
+          0.368,
+          0.263,
+          0.45
+        ],
+        "Fresh Meadows": [
+          -0.076,
+          -0.161,
+          -0.01
+        ],
+        "Garment District": [
+          0.848,
+          0.82,
+          0.871
+        ],
+        "Glen Oaks": [
+          -0.023,
+          -0.103,
+          -0.001
+        ],
+        "Glendale": [
+          -0.085,
+          -0.185,
+          0.013
+        ],
+        "Gowanus": [
+          0.25,
+          0.098,
+          0.358
+        ],
+        "Gramercy": [
+          0.876,
+          0.848,
+          0.898
+        ],
+        "Gravesend": [
+          0.019,
+          -0.08,
+          0.096
+        ],
+        "Greenpoint": [
+          0.558,
+          0.452,
+          0.646
+        ],
+        "Greenwich Village North": [
+          0.861,
+          0.83,
+          0.885
+        ],
+        "Greenwich Village South": [
+          0.937,
+          0.92,
+          0.949
+        ],
+        "Hamilton Heights": [
+          0.304,
+          0.132,
+          0.436
+        ],
+        "Hammels/Arverne": [
+          0.214,
+          0.067,
+          0.32
+        ],
+        "Highbridge": [
+          -0.032,
+          -0.098,
+          0.015
+        ],
+        "Highbridge Park": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Hillcrest/Pomonok": [
+          -0.145,
+          -0.309,
+          -0.045
+        ],
+        "Hollis": [
+          0.029,
+          -0.05,
+          0.062
+        ],
+        "Homecrest": [
+          0.023,
+          -0.077,
+          0.098
+        ],
+        "Howard Beach": [
+          0.012,
+          -0.098,
+          0.091
+        ],
+        "Hudson Sq": [
+          0.784,
+          0.75,
+          0.817
+        ],
+        "Hunts Point": [
+          -0.168,
+          -0.272,
+          -0.074
+        ],
+        "Inwood": [
+          -0.096,
+          -0.283,
+          0.025
+        ],
+        "Inwood Hill Park": [
+          0.002,
+          -0.168,
+          0.077
+        ],
+        "JFK Airport": [
+          0.845,
+          0.812,
+          0.871
+        ],
+        "Jackson Heights": [
+          0.132,
+          -0.025,
+          0.255
+        ],
+        "Jamaica": [
+          0.143,
+          0.042,
+          0.234
+        ],
+        "Jamaica Estates": [
+          -0.031,
+          -0.091,
+          0.031
+        ],
+        "Kensington": [
+          0.052,
+          -0.056,
+          0.154
+        ],
+        "Kew Gardens": [
+          0.084,
+          0.01,
+          0.147
+        ],
+        "Kew Gardens Hills": [
+          0.054,
+          -0.036,
+          0.131
+        ],
+        "Kingsbridge Heights": [
+          0.047,
+          -0.061,
+          0.107
+        ],
+        "Kips Bay": [
+          0.852,
+          0.825,
+          0.874
+        ],
+        "LaGuardia Airport": [
+          0.768,
+          0.725,
+          0.806
+        ],
+        "Laurelton": [
+          0.021,
+          -0.1,
+          0.113
+        ],
+        "Lenox Hill East": [
+          0.945,
+          0.935,
+          0.954
+        ],
+        "Lenox Hill West": [
+          0.895,
+          0.876,
+          0.913
+        ],
+        "Lincoln Square East": [
+          0.804,
+          0.755,
+          0.844
+        ],
+        "Lincoln Square West": [
+          0.901,
+          0.883,
+          0.917
+        ],
+        "Little Italy/NoLiTa": [
+          0.915,
+          0.901,
+          0.928
+        ],
+        "Long Island City/Hunters Point": [
+          0.369,
+          0.284,
+          0.44
+        ],
+        "Long Island City/Queens Plaza": [
+          0.187,
+          0.091,
+          0.265
+        ],
+        "Longwood": [
+          0.001,
+          -0.089,
+          0.064
+        ],
+        "Lower East Side": [
+          0.941,
+          0.924,
+          0.953
+        ],
+        "Madison": [
+          -0.093,
+          -0.192,
+          -0.019
+        ],
+        "Manhattan Beach": [
+          -0.047,
+          -0.153,
+          0.029
+        ],
+        "Manhattan Valley": [
+          0.884,
+          0.865,
+          0.901
+        ],
+        "Manhattanville": [
+          0.235,
+          0.117,
+          0.34
+        ],
+        "Marble Hill": [
+          -0.01,
+          -0.275,
+          -0.001
+        ],
+        "Marine Park/Floyd Bennett Field": [
+          -0.123,
+          -0.219,
+          0.092
+        ],
+        "Marine Park/Mill Basin": [
+          0.059,
+          -0.04,
+          0.158
+        ],
+        "Maspeth": [
+          0.386,
+          0.249,
+          0.478
+        ],
+        "Meatpacking/West Village West": [
+          0.842,
+          0.821,
+          0.864
+        ],
+        "Melrose South": [
+          0.047,
+          -0.01,
+          0.098
+        ],
+        "Middle Village": [
+          -0.022,
+          -0.072,
+          0.006
+        ],
+        "Midtown Center": [
+          0.931,
+          0.914,
+          0.945
+        ],
+        "Midtown East": [
+          0.922,
+          0.902,
+          0.939
+        ],
+        "Midtown North": [
+          0.935,
+          0.922,
+          0.948
+        ],
+        "Midtown South": [
+          0.896,
+          0.874,
+          0.917
+        ],
+        "Midwood": [
+          0.121,
+          0.056,
+          0.181
+        ],
+        "Morningside Heights": [
+          0.415,
+          0.316,
+          0.504
+        ],
+        "Morrisania/Melrose": [
+          0.0,
+          -0.171,
+          0.111
+        ],
+        "Mott Haven/Port Morris": [
+          0.145,
+          0.065,
+          0.216
+        ],
+        "Mount Hope": [
+          0.011,
+          -0.094,
+          0.082
+        ],
+        "Murray Hill": [
+          0.928,
+          0.915,
+          0.939
+        ],
+        "Murray Hill-Queens": [
+          -0.009,
+          -0.112,
+          0.06
+        ],
+        "Newark Airport": [
+          -0.088,
+          -0.25,
+          0.031
+        ],
+        "North Corona": [
+          0.146,
+          -0.142,
+          0.258
+        ],
+        "Norwood": [
+          -0.042,
+          -0.115,
+          0.007
+        ],
+        "Oakland Gardens": [
+          0.053,
+          -0.274,
+          0.095
+        ],
+        "Ocean Hill": [
+          0.257,
+          0.148,
+          0.352
+        ],
+        "Ocean Parkway South": [
+          0.025,
+          -0.125,
+          0.089
+        ],
+        "Old Astoria": [
+          0.122,
+          0.028,
+          0.204
+        ],
+        "Outside of NYC": [
+          -0.05,
+          -0.132,
+          0.013
+        ],
+        "Ozone Park": [
+          -0.064,
+          -0.263,
+          0.045
+        ],
+        "Park Slope": [
+          0.389,
+          0.285,
+          0.453
+        ],
+        "Parkchester": [
+          -0.06,
+          -0.397,
+          0.108
+        ],
+        "Pelham Bay": [
+          0.0,
+          -0.417,
+          0.067
+        ],
+        "Pelham Bay Park": [
+          -0.053,
+          -0.25,
+          -0.053
+        ],
+        "Pelham Parkway": [
+          -0.147,
+          -0.491,
+          -0.006
+        ],
+        "Penn Station/Madison Sq West": [
+          0.779,
+          0.736,
+          0.817
+        ],
+        "Prospect Heights": [
+          0.232,
+          0.085,
+          0.346
+        ],
+        "Prospect Park": [
+          -0.077,
+          -0.155,
+          -0.005
+        ],
+        "Prospect-Lefferts Gardens": [
+          0.186,
+          0.112,
+          0.255
+        ],
+        "Queens Village": [
+          -0.029,
+          -0.109,
+          0.055
+        ],
+        "Queensboro Hill": [
+          -0.067,
+          -0.15,
+          0.059
+        ],
+        "Queensbridge/Ravenswood": [
+          -0.172,
+          -0.361,
+          -0.043
+        ],
+        "Randalls Island": [
+          -0.04,
+          -0.171,
+          0.039
+        ],
+        "Red Hook": [
+          0.329,
+          0.186,
+          0.471
+        ],
+        "Rego Park": [
+          0.08,
+          -0.01,
+          0.159
+        ],
+        "Richmond Hill": [
+          0.026,
+          -0.031,
+          0.076
+        ],
+        "Ridgewood": [
+          0.169,
+          0.104,
+          0.242
+        ],
+        "Riverdale/North Riverdale/Fieldston": [
+          -0.024,
+          -0.083,
+          0.021
+        ],
+        "Rockaway Park": [
+          -0.112,
+          -0.347,
+          0.013
+        ],
+        "Roosevelt Island": [
+          -0.023,
+          -0.144,
+          0.056
+        ],
+        "Rosedale": [
+          -0.019,
+          -0.137,
+          0.091
+        ],
+        "Saint Albans": [
+          0.028,
+          -0.049,
+          0.093
+        ],
+        "Saint Michaels Cemetery/Woodside": [
+          -0.041,
+          -0.092,
+          0.06
+        ],
+        "Schuylerville/Edgewater Park": [
+          0.103,
+          0.007,
+          0.212
+        ],
+        "Seaport": [
+          0.637,
+          0.591,
+          0.678
+        ],
+        "Sheepshead Bay": [
+          0.076,
+          -0.034,
+          0.176
+        ],
+        "SoHo": [
+          0.858,
+          0.838,
+          0.877
+        ],
+        "Soundview/Bruckner": [
+          0.136,
+          -0.067,
+          0.258
+        ],
+        "Soundview/Castle Hill": [
+          0.109,
+          -0.017,
+          0.22
+        ],
+        "South Jamaica": [
+          0.112,
+          0.023,
+          0.177
+        ],
+        "South Ozone Park": [
+          0.092,
+          0.024,
+          0.156
+        ],
+        "South Williamsburg": [
+          -0.29,
+          -0.761,
+          -0.024
+        ],
+        "Springfield Gardens North": [
+          0.107,
+          -0.003,
+          0.195
+        ],
+        "Springfield Gardens South": [
+          -0.011,
+          -0.074,
+          0.045
+        ],
+        "Spuyten Duyvil/Kingsbridge": [
+          -0.038,
+          -0.122,
+          0.035
+        ],
+        "Starrett City": [
+          0.083,
+          -0.028,
+          0.168
+        ],
+        "Steinway": [
+          0.199,
+          0.136,
+          0.265
+        ],
+        "Stuy Town/Peter Cooper Village": [
+          0.524,
+          0.465,
+          0.58
+        ],
+        "Stuyvesant Heights": [
+          0.194,
+          0.098,
+          0.289
+        ],
+        "Sunnyside": [
+          0.316,
+          0.229,
+          0.387
+        ],
+        "Sunset Park East": [
+          -0.059,
+          -0.157,
+          0.048
+        ],
+        "Sunset Park West": [
+          0.212,
+          0.037,
+          0.304
+        ],
+        "Sutton Place/Turtle Bay North": [
+          0.905,
+          0.889,
+          0.92
+        ],
+        "Times Sq/Theatre District": [
+          0.896,
+          0.874,
+          0.914
+        ],
+        "TriBeCa/Civic Center": [
+          0.855,
+          0.83,
+          0.878
+        ],
+        "Two Bridges/Seward Park": [
+          0.563,
+          0.481,
+          0.63
+        ],
+        "UN/Turtle Bay South": [
+          0.902,
+          0.886,
+          0.916
+        ],
+        "Union Sq": [
+          0.934,
+          0.919,
+          0.946
+        ],
+        "University Heights/Morris Heights": [
+          0.029,
+          -0.067,
+          0.115
+        ],
+        "Unknown": [
+          0.686,
+          0.646,
+          0.724
+        ],
+        "Upper East Side North": [
+          0.919,
+          0.907,
+          0.93
+        ],
+        "Upper East Side South": [
+          0.944,
+          0.935,
+          0.951
+        ],
+        "Upper West Side North": [
+          0.903,
+          0.887,
+          0.918
+        ],
+        "Upper West Side South": [
+          0.893,
+          0.874,
+          0.911
+        ],
+        "Van Cortlandt Park": [
+          -0.111,
+          -0.334,
+          -0.053
+        ],
+        "Van Cortlandt Village": [
+          0.01,
+          -0.074,
+          0.081
+        ],
+        "Van Nest/Morris Park": [
+          -0.342,
+          -0.927,
+          -0.06
+        ],
+        "Washington Heights North": [
+          0.223,
+          0.078,
+          0.343
+        ],
+        "Washington Heights South": [
+          0.377,
+          0.27,
+          0.465
+        ],
+        "West Chelsea/Hudson Yards": [
+          0.813,
+          0.777,
+          0.848
+        ],
+        "West Concourse": [
+          0.044,
+          -0.066,
+          0.134
+        ],
+        "West Farms/Bronx River": [
+          -0.013,
+          -0.188,
+          0.11
+        ],
+        "West Village": [
+          0.92,
+          0.902,
+          0.935
+        ],
+        "Westchester Village/Unionport": [
+          0.019,
+          -0.066,
+          0.098
+        ],
+        "Whitestone": [
+          0.006,
+          -0.196,
+          0.056
+        ],
+        "Willets Point": [
+          -0.101,
+          -0.342,
+          -0.035
+        ],
+        "Williamsbridge/Olinville": [
+          0.004,
+          -0.132,
+          0.087
+        ],
+        "Williamsburg (North Side)": [
+          0.614,
+          0.556,
+          0.674
+        ],
+        "Williamsburg (South Side)": [
+          0.583,
+          0.493,
+          0.662
+        ],
+        "Windsor Terrace": [
+          0.002,
+          -0.085,
+          0.091
+        ],
+        "Woodhaven": [
+          0.094,
+          -0.005,
+          0.176
+        ],
+        "Woodlawn/Wakefield": [
+          -0.001,
+          -0.113,
+          0.096
+        ],
+        "Woodside": [
+          0.228,
+          0.111,
+          0.332
+        ],
+        "World Trade Center": [
+          0.856,
+          0.834,
+          0.875
+        ],
+        "Yorkville East": [
+          0.897,
+          0.878,
+          0.913
+        ],
+        "Yorkville West": [
+          0.879,
+          0.857,
+          0.899
+        ]
+      },
+      "n_params": 98982,
+      "epochs_trained": 120
+    },
+    "no_spatial": {
+      "overall": {
+        "rmse": 13.905641555786133,
+        "r2": 0.9657257199287415,
+        "mae": 6.250898838043213,
+        "n_test": 78904
+      },
+      "temporal_ratio_ci": [
+        3.773,
+        3.539,
+        4.413
+      ],
+      "high_demand_degradation_ci": [
+        315.333,
+        300.41,
+        330.462
+      ],
+      "per_zone_r2_ci": {
+        "Allerton/Pelham Gardens": [
+          -0.109,
+          -0.261,
+          -0.008
+        ],
+        "Alphabet City": [
+          0.774,
+          0.686,
+          0.83
+        ],
+        "Arrochar/Fort Wadsworth": [
+          -0.04,
+          -0.168,
+          0.027
+        ],
+        "Astoria": [
+          0.199,
+          0.129,
+          0.269
+        ],
+        "Astoria Park": [
+          -0.125,
+          -0.286,
+          -0.039
+        ],
+        "Auburndale": [
+          -0.011,
+          -0.283,
+          0.106
+        ],
+        "Baisley Park": [
+          0.102,
+          0.01,
+          0.179
+        ],
+        "Bath Beach": [
+          -0.078,
+          -0.619,
+          0.039
+        ],
+        "Battery Park": [
+          0.349,
+          0.269,
+          0.424
+        ],
+        "Battery Park City": [
+          0.898,
+          0.881,
+          0.912
+        ],
+        "Bay Ridge": [
+          0.115,
+          0.046,
+          0.181
+        ],
+        "Bay Terrace/Fort Totten": [
+          -0.041,
+          -0.203,
+          0.068
+        ],
+        "Bayside": [
+          -0.005,
+          -0.245,
+          0.075
+        ],
+        "Bedford": [
+          0.149,
+          0.07,
+          0.223
+        ],
+        "Bedford Park": [
+          -0.042,
+          -0.127,
+          0.019
+        ],
+        "Bellerose": [
+          -0.026,
+          -0.103,
+          0.031
+        ],
+        "Belmont": [
+          -0.021,
+          -0.094,
+          0.047
+        ],
+        "Bensonhurst East": [
+          -0.013,
+          -0.102,
+          0.049
+        ],
+        "Bensonhurst West": [
+          0.083,
+          -0.007,
+          0.151
+        ],
+        "Bloomfield/Emerson Hill": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Bloomingdale": [
+          0.701,
+          0.659,
+          0.741
+        ],
+        "Boerum Hill": [
+          0.291,
+          0.181,
+          0.374
+        ],
+        "Borough Park": [
+          0.016,
+          -0.057,
+          0.084
+        ],
+        "Breezy Point/Fort Tilden/Riis Beach": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Briarwood/Jamaica Hills": [
+          0.055,
+          -0.054,
+          0.137
+        ],
+        "Brighton Beach": [
+          0.136,
+          -0.036,
+          0.269
+        ],
+        "Bronx Park": [
+          -0.158,
+          -0.343,
+          -0.055
+        ],
+        "Bronxdale": [
+          -0.024,
+          -0.126,
+          0.018
+        ],
+        "Brooklyn Heights": [
+          0.307,
+          0.201,
+          0.4
+        ],
+        "Brooklyn Navy Yard": [
+          0.044,
+          -0.371,
+          0.266
+        ],
+        "Brownsville": [
+          0.337,
+          0.244,
+          0.422
+        ],
+        "Bushwick North": [
+          0.391,
+          0.181,
+          0.534
+        ],
+        "Bushwick South": [
+          0.351,
+          0.22,
+          0.455
+        ],
+        "Cambria Heights": [
+          -0.037,
+          -0.114,
+          0.039
+        ],
+        "Canarsie": [
+          0.241,
+          0.097,
+          0.356
+        ],
+        "Carroll Gardens": [
+          0.166,
+          0.04,
+          0.255
+        ],
+        "Central Harlem": [
+          0.665,
+          0.614,
+          0.709
+        ],
+        "Central Harlem North": [
+          0.502,
+          0.429,
+          0.565
+        ],
+        "Central Park": [
+          0.887,
+          0.858,
+          0.909
+        ],
+        "Chinatown": [
+          0.513,
+          0.432,
+          0.584
+        ],
+        "City Island": [
+          -0.157,
+          -0.388,
+          -0.018
+        ],
+        "Claremont/Bathgate": [
+          -0.013,
+          -0.102,
+          0.057
+        ],
+        "Clinton East": [
+          0.871,
+          0.849,
+          0.89
+        ],
+        "Clinton Hill": [
+          0.195,
+          0.099,
+          0.284
+        ],
+        "Clinton West": [
+          0.752,
+          0.715,
+          0.786
+        ],
+        "Co-Op City": [
+          -0.021,
+          -0.302,
+          0.176
+        ],
+        "Cobble Hill": [
+          0.28,
+          0.129,
+          0.4
+        ],
+        "College Point": [
+          0.038,
+          -0.47,
+          0.118
+        ],
+        "Columbia Street": [
+          -0.064,
+          -0.174,
+          0.061
+        ],
+        "Coney Island": [
+          0.043,
+          -0.048,
+          0.118
+        ],
+        "Corona": [
+          -0.001,
+          -0.064,
+          0.046
+        ],
+        "Country Club": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Crotona Park East": [
+          0.027,
+          -0.045,
+          0.103
+        ],
+        "Crown Heights North": [
+          0.269,
+          0.183,
+          0.344
+        ],
+        "Crown Heights South": [
+          0.06,
+          -0.023,
+          0.125
+        ],
+        "Cypress Hills": [
+          -0.02,
+          -0.13,
+          0.088
+        ],
+        "DUMBO/Vinegar Hill": [
+          0.299,
+          0.217,
+          0.363
+        ],
+        "Douglaston": [
+          -0.016,
+          -0.208,
+          0.047
+        ],
+        "Downtown Brooklyn/MetroTech": [
+          0.271,
+          0.184,
+          0.343
+        ],
+        "Dyker Heights": [
+          0.021,
+          -0.044,
+          0.064
+        ],
+        "East Chelsea": [
+          0.919,
+          0.906,
+          0.931
+        ],
+        "East Concourse/Concourse Village": [
+          0.024,
+          -0.101,
+          0.124
+        ],
+        "East Elmhurst": [
+          0.493,
+          0.42,
+          0.558
+        ],
+        "East Flatbush/Farragut": [
+          0.201,
+          0.116,
+          0.279
+        ],
+        "East Flatbush/Remsen Village": [
+          0.207,
+          0.126,
+          0.281
+        ],
+        "East Flushing": [
+          -0.052,
+          -0.156,
+          -0.006
+        ],
+        "East Harlem North": [
+          0.67,
+          0.625,
+          0.71
+        ],
+        "East Harlem South": [
+          0.84,
+          0.813,
+          0.863
+        ],
+        "East New York": [
+          0.264,
+          0.157,
+          0.355
+        ],
+        "East New York/Pennsylvania Avenue": [
+          -0.041,
+          -0.132,
+          0.036
+        ],
+        "East Tremont": [
+          0.008,
+          -0.096,
+          0.064
+        ],
+        "East Village": [
+          0.941,
+          0.925,
+          0.954
+        ],
+        "East Williamsburg": [
+          0.685,
+          0.609,
+          0.756
+        ],
+        "Eastchester": [
+          -0.01,
+          -0.277,
+          0.064
+        ],
+        "Elmhurst": [
+          0.121,
+          0.005,
+          0.215
+        ],
+        "Elmhurst/Maspeth": [
+          0.081,
+          -0.058,
+          0.221
+        ],
+        "Erasmus": [
+          0.059,
+          -0.019,
+          0.118
+        ],
+        "Far Rockaway": [
+          0.051,
+          -0.047,
+          0.124
+        ],
+        "Financial District North": [
+          0.847,
+          0.818,
+          0.873
+        ],
+        "Financial District South": [
+          0.771,
+          0.734,
+          0.804
+        ],
+        "Flatbush/Ditmas Park": [
+          0.156,
+          0.052,
+          0.243
+        ],
+        "Flatiron": [
+          0.878,
+          0.855,
+          0.897
+        ],
+        "Flatlands": [
+          0.397,
+          0.234,
+          0.515
+        ],
+        "Flushing": [
+          0.118,
+          0.009,
+          0.219
+        ],
+        "Flushing Meadows-Corona Park": [
+          0.196,
+          0.104,
+          0.259
+        ],
+        "Fordham South": [
+          -0.007,
+          -0.079,
+          0.062
+        ],
+        "Forest Hills": [
+          0.109,
+          0.029,
+          0.206
+        ],
+        "Forest Park/Highland Park": [
+          -0.05,
+          -0.167,
+          -0.05
+        ],
+        "Fort Greene": [
+          0.294,
+          0.153,
+          0.398
+        ],
+        "Fresh Meadows": [
+          -0.032,
+          -0.123,
+          0.047
+        ],
+        "Garment District": [
+          0.854,
+          0.827,
+          0.877
+        ],
+        "Glen Oaks": [
+          -0.088,
+          -0.263,
+          -0.028
+        ],
+        "Glendale": [
+          -0.064,
+          -0.158,
+          0.014
+        ],
+        "Gowanus": [
+          0.129,
+          0.009,
+          0.221
+        ],
+        "Gramercy": [
+          0.891,
+          0.871,
+          0.91
+        ],
+        "Gravesend": [
+          0.024,
+          -0.088,
+          0.113
+        ],
+        "Greenpoint": [
+          0.606,
+          0.518,
+          0.681
+        ],
+        "Greenwich Village North": [
+          0.899,
+          0.881,
+          0.915
+        ],
+        "Greenwich Village South": [
+          0.936,
+          0.918,
+          0.95
+        ],
+        "Hamilton Heights": [
+          0.449,
+          0.364,
+          0.519
+        ],
+        "Hammels/Arverne": [
+          0.146,
+          -0.03,
+          0.271
+        ],
+        "Highbridge": [
+          -0.004,
+          -0.124,
+          0.089
+        ],
+        "Highbridge Park": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Hillcrest/Pomonok": [
+          -0.095,
+          -0.217,
+          0.002
+        ],
+        "Hollis": [
+          0.019,
+          -0.039,
+          0.054
+        ],
+        "Homecrest": [
+          0.044,
+          -0.092,
+          0.134
+        ],
+        "Howard Beach": [
+          0.016,
+          -0.071,
+          0.094
+        ],
+        "Hudson Sq": [
+          0.778,
+          0.744,
+          0.808
+        ],
+        "Hunts Point": [
+          -0.116,
+          -0.223,
+          -0.027
+        ],
+        "Inwood": [
+          -0.056,
+          -0.216,
+          0.033
+        ],
+        "Inwood Hill Park": [
+          0.022,
+          -0.097,
+          0.051
+        ],
+        "JFK Airport": [
+          0.882,
+          0.858,
+          0.902
+        ],
+        "Jackson Heights": [
+          0.12,
+          0.025,
+          0.197
+        ],
+        "Jamaica": [
+          0.122,
+          0.038,
+          0.202
+        ],
+        "Jamaica Estates": [
+          -0.075,
+          -0.166,
+          0.002
+        ],
+        "Kensington": [
+          0.084,
+          -0.048,
+          0.221
+        ],
+        "Kew Gardens": [
+          0.019,
+          -0.061,
+          0.078
+        ],
+        "Kew Gardens Hills": [
+          0.043,
+          -0.051,
+          0.11
+        ],
+        "Kingsbridge Heights": [
+          0.057,
+          -0.053,
+          0.133
+        ],
+        "Kips Bay": [
+          0.856,
+          0.828,
+          0.879
+        ],
+        "LaGuardia Airport": [
+          0.793,
+          0.756,
+          0.825
+        ],
+        "Laurelton": [
+          0.071,
+          -0.015,
+          0.14
+        ],
+        "Lenox Hill East": [
+          0.957,
+          0.95,
+          0.964
+        ],
+        "Lenox Hill West": [
+          0.925,
+          0.91,
+          0.937
+        ],
+        "Lincoln Square East": [
+          0.867,
+          0.829,
+          0.898
+        ],
+        "Lincoln Square West": [
+          0.898,
+          0.877,
+          0.915
+        ],
+        "Little Italy/NoLiTa": [
+          0.921,
+          0.908,
+          0.934
+        ],
+        "Long Island City/Hunters Point": [
+          0.276,
+          0.13,
+          0.385
+        ],
+        "Long Island City/Queens Plaza": [
+          0.174,
+          0.088,
+          0.247
+        ],
+        "Longwood": [
+          0.037,
+          -0.05,
+          0.086
+        ],
+        "Lower East Side": [
+          0.951,
+          0.935,
+          0.963
+        ],
+        "Madison": [
+          -0.118,
+          -0.22,
+          -0.037
+        ],
+        "Manhattan Beach": [
+          -0.052,
+          -0.149,
+          0.016
+        ],
+        "Manhattan Valley": [
+          0.906,
+          0.89,
+          0.919
+        ],
+        "Manhattanville": [
+          0.31,
+          0.207,
+          0.397
+        ],
+        "Marble Hill": [
+          -0.047,
+          -0.388,
+          -0.018
+        ],
+        "Marine Park/Floyd Bennett Field": [
+          -0.526,
+          -0.657,
+          -0.081
+        ],
+        "Marine Park/Mill Basin": [
+          0.066,
+          -0.027,
+          0.159
+        ],
+        "Maspeth": [
+          0.53,
+          0.394,
+          0.62
+        ],
+        "Meatpacking/West Village West": [
+          0.904,
+          0.884,
+          0.919
+        ],
+        "Melrose South": [
+          0.041,
+          -0.022,
+          0.097
+        ],
+        "Middle Village": [
+          -0.004,
+          -0.091,
+          0.046
+        ],
+        "Midtown Center": [
+          0.956,
+          0.949,
+          0.963
+        ],
+        "Midtown East": [
+          0.944,
+          0.93,
+          0.955
+        ],
+        "Midtown North": [
+          0.94,
+          0.929,
+          0.949
+        ],
+        "Midtown South": [
+          0.907,
+          0.886,
+          0.925
+        ],
+        "Midwood": [
+          0.129,
+          0.039,
+          0.197
+        ],
+        "Morningside Heights": [
+          0.77,
+          0.734,
+          0.802
+        ],
+        "Morrisania/Melrose": [
+          0.019,
+          -0.127,
+          0.111
+        ],
+        "Mott Haven/Port Morris": [
+          0.067,
+          -0.041,
+          0.157
+        ],
+        "Mount Hope": [
+          -0.028,
+          -0.16,
+          0.059
+        ],
+        "Murray Hill": [
+          0.943,
+          0.934,
+          0.952
+        ],
+        "Murray Hill-Queens": [
+          -0.031,
+          -0.128,
+          0.026
+        ],
+        "Newark Airport": [
+          -0.061,
+          -0.251,
+          0.107
+        ],
+        "North Corona": [
+          0.032,
+          -0.044,
+          0.087
+        ],
+        "Norwood": [
+          -0.068,
+          -0.157,
+          -0.011
+        ],
+        "Oakland Gardens": [
+          -0.008,
+          -0.233,
+          0.008
+        ],
+        "Ocean Hill": [
+          0.218,
+          0.094,
+          0.318
+        ],
+        "Ocean Parkway South": [
+          -0.006,
+          -0.114,
+          0.098
+        ],
+        "Old Astoria": [
+          0.111,
+          0.021,
+          0.186
+        ],
+        "Outside of NYC": [
+          -0.063,
+          -0.152,
+          0.003
+        ],
+        "Ozone Park": [
+          -0.109,
+          -0.282,
+          -0.011
+        ],
+        "Park Slope": [
+          0.385,
+          0.267,
+          0.463
+        ],
+        "Parkchester": [
+          -0.027,
+          -0.349,
+          0.145
+        ],
+        "Pelham Bay": [
+          0.005,
+          -0.42,
+          0.106
+        ],
+        "Pelham Bay Park": [
+          -0.053,
+          -0.25,
+          -0.053
+        ],
+        "Pelham Parkway": [
+          -0.06,
+          -0.303,
+          0.044
+        ],
+        "Penn Station/Madison Sq West": [
+          0.83,
+          0.8,
+          0.858
+        ],
+        "Prospect Heights": [
+          0.06,
+          -0.138,
+          0.2
+        ],
+        "Prospect Park": [
+          -0.083,
+          -0.167,
+          -0.021
+        ],
+        "Prospect-Lefferts Gardens": [
+          0.106,
+          -0.004,
+          0.201
+        ],
+        "Queens Village": [
+          -0.057,
+          -0.136,
+          0.014
+        ],
+        "Queensboro Hill": [
+          -0.056,
+          -0.135,
+          0.061
+        ],
+        "Queensbridge/Ravenswood": [
+          -0.007,
+          -0.082,
+          0.056
+        ],
+        "Randalls Island": [
+          -0.002,
+          -0.11,
+          0.064
+        ],
+        "Red Hook": [
+          0.38,
+          0.197,
+          0.541
+        ],
+        "Rego Park": [
+          0.03,
+          -0.062,
+          0.121
+        ],
+        "Richmond Hill": [
+          0.022,
+          -0.054,
+          0.091
+        ],
+        "Ridgewood": [
+          0.254,
+          0.119,
+          0.342
+        ],
+        "Riverdale/North Riverdale/Fieldston": [
+          0.037,
+          -0.042,
+          0.112
+        ],
+        "Rockaway Park": [
+          -0.06,
+          -0.208,
+          0.018
+        ],
+        "Roosevelt Island": [
+          -0.067,
+          -0.161,
+          0.002
+        ],
+        "Rosedale": [
+          -0.015,
+          -0.141,
+          0.086
+        ],
+        "Saint Albans": [
+          0.002,
+          -0.093,
+          0.082
+        ],
+        "Saint Michaels Cemetery/Woodside": [
+          -0.156,
+          -0.193,
+          -0.106
+        ],
+        "Schuylerville/Edgewater Park": [
+          0.074,
+          -0.035,
+          0.207
+        ],
+        "Seaport": [
+          0.708,
+          0.657,
+          0.753
+        ],
+        "Sheepshead Bay": [
+          0.103,
+          -0.015,
+          0.208
+        ],
+        "SoHo": [
+          0.89,
+          0.872,
+          0.906
+        ],
+        "Soundview/Bruckner": [
+          0.098,
+          -0.11,
+          0.217
+        ],
+        "Soundview/Castle Hill": [
+          0.064,
+          -0.046,
+          0.167
+        ],
+        "South Jamaica": [
+          0.062,
+          -0.049,
+          0.148
+        ],
+        "South Ozone Park": [
+          0.03,
+          -0.054,
+          0.107
+        ],
+        "South Williamsburg": [
+          -0.123,
+          -0.414,
+          0.055
+        ],
+        "Springfield Gardens North": [
+          0.046,
+          -0.084,
+          0.153
+        ],
+        "Springfield Gardens South": [
+          -0.05,
+          -0.118,
+          0.005
+        ],
+        "Spuyten Duyvil/Kingsbridge": [
+          -0.027,
+          -0.128,
+          0.049
+        ],
+        "Starrett City": [
+          0.075,
+          -0.024,
+          0.146
+        ],
+        "Steinway": [
+          0.115,
+          0.033,
+          0.204
+        ],
+        "Stuy Town/Peter Cooper Village": [
+          0.517,
+          0.448,
+          0.575
+        ],
+        "Stuyvesant Heights": [
+          0.162,
+          0.055,
+          0.266
+        ],
+        "Sunnyside": [
+          0.239,
+          0.172,
+          0.297
+        ],
+        "Sunset Park East": [
+          -0.133,
+          -0.365,
+          -0.003
+        ],
+        "Sunset Park West": [
+          0.197,
+          -0.004,
+          0.302
+        ],
+        "Sutton Place/Turtle Bay North": [
+          0.907,
+          0.888,
+          0.923
+        ],
+        "Times Sq/Theatre District": [
+          0.897,
+          0.877,
+          0.914
+        ],
+        "TriBeCa/Civic Center": [
+          0.885,
+          0.865,
+          0.902
+        ],
+        "Two Bridges/Seward Park": [
+          0.527,
+          0.456,
+          0.59
+        ],
+        "UN/Turtle Bay South": [
+          0.899,
+          0.883,
+          0.913
+        ],
+        "Union Sq": [
+          0.941,
+          0.93,
+          0.95
+        ],
+        "University Heights/Morris Heights": [
+          0.042,
+          -0.035,
+          0.114
+        ],
+        "Unknown": [
+          0.701,
+          0.662,
+          0.74
+        ],
+        "Upper East Side North": [
+          0.956,
+          0.949,
+          0.963
+        ],
+        "Upper East Side South": [
+          0.963,
+          0.958,
+          0.968
+        ],
+        "Upper West Side North": [
+          0.933,
+          0.918,
+          0.946
+        ],
+        "Upper West Side South": [
+          0.924,
+          0.91,
+          0.937
+        ],
+        "Van Cortlandt Park": [
+          -0.111,
+          -0.333,
+          -0.053
+        ],
+        "Van Cortlandt Village": [
+          -0.002,
+          -0.084,
+          0.066
+        ],
+        "Van Nest/Morris Park": [
+          -0.056,
+          -0.196,
+          0.016
+        ],
+        "Washington Heights North": [
+          0.157,
+          0.048,
+          0.253
+        ],
+        "Washington Heights South": [
+          0.299,
+          0.198,
+          0.384
+        ],
+        "West Chelsea/Hudson Yards": [
+          0.905,
+          0.891,
+          0.917
+        ],
+        "West Concourse": [
+          0.161,
+          0.05,
+          0.247
+        ],
+        "West Farms/Bronx River": [
+          -0.015,
+          -0.235,
+          0.114
+        ],
+        "West Village": [
+          0.936,
+          0.919,
+          0.949
+        ],
+        "Westchester Village/Unionport": [
+          -0.021,
+          -0.138,
+          0.067
+        ],
+        "Whitestone": [
+          -0.007,
+          -0.271,
+          0.073
+        ],
+        "Willets Point": [
+          -0.069,
+          -0.298,
+          -0.015
+        ],
+        "Williamsbridge/Olinville": [
+          -0.037,
+          -0.224,
+          0.063
+        ],
+        "Williamsburg (North Side)": [
+          0.746,
+          0.693,
+          0.797
+        ],
+        "Williamsburg (South Side)": [
+          0.637,
+          0.559,
+          0.703
+        ],
+        "Windsor Terrace": [
+          0.011,
+          -0.11,
+          0.118
+        ],
+        "Woodhaven": [
+          0.03,
+          -0.12,
+          0.138
+        ],
+        "Woodlawn/Wakefield": [
+          -0.024,
+          -0.157,
+          0.082
+        ],
+        "Woodside": [
+          0.148,
+          0.028,
+          0.257
+        ],
+        "World Trade Center": [
+          0.86,
+          0.841,
+          0.878
+        ],
+        "Yorkville East": [
+          0.933,
+          0.92,
+          0.944
+        ],
+        "Yorkville West": [
+          0.898,
+          0.878,
+          0.914
+        ]
+      },
+      "n_params": 98982,
+      "epochs_trained": 120
+    },
+    "stgcn": {
+      "overall": {
+        "rmse": 22.77382469177246,
+        "r2": 0.9080697894096375,
+        "mae": 9.800088882446289,
+        "n_test": 78904
+      },
+      "temporal_ratio_ci": [
+        3.507,
+        3.195,
+        3.911
+      ],
+      "high_demand_degradation_ci": [
+        316.918,
+        302.056,
+        332.468
+      ],
+      "per_zone_r2_ci": {
+        "Allerton/Pelham Gardens": [
+          -0.107,
+          -0.225,
+          -0.034
+        ],
+        "Alphabet City": [
+          0.507,
+          0.296,
+          0.637
+        ],
+        "Arrochar/Fort Wadsworth": [
+          -0.06,
+          -0.263,
+          0.138
+        ],
+        "Astoria": [
+          0.193,
+          0.113,
+          0.272
+        ],
+        "Astoria Park": [
+          -0.188,
+          -0.374,
+          -0.11
+        ],
+        "Auburndale": [
+          -0.009,
+          -0.207,
+          0.102
+        ],
+        "Baisley Park": [
+          0.058,
+          0.012,
+          0.101
+        ],
+        "Bath Beach": [
+          -0.157,
+          -0.744,
+          -0.031
+        ],
+        "Battery Park": [
+          0.033,
+          -0.019,
+          0.077
+        ],
+        "Battery Park City": [
+          0.762,
+          0.736,
+          0.789
+        ],
+        "Bay Ridge": [
+          0.063,
+          -0.008,
+          0.126
+        ],
+        "Bay Terrace/Fort Totten": [
+          -0.234,
+          -0.454,
+          -0.177
+        ],
+        "Bayside": [
+          -0.012,
+          -0.22,
+          0.069
+        ],
+        "Bedford": [
+          0.145,
+          0.095,
+          0.193
+        ],
+        "Bedford Park": [
+          -0.029,
+          -0.093,
+          0.017
+        ],
+        "Bellerose": [
+          -0.051,
+          -0.128,
+          0.018
+        ],
+        "Belmont": [
+          0.013,
+          -0.074,
+          0.094
+        ],
+        "Bensonhurst East": [
+          -0.068,
+          -0.154,
+          -0.006
+        ],
+        "Bensonhurst West": [
+          0.073,
+          0.012,
+          0.122
+        ],
+        "Bloomfield/Emerson Hill": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Bloomingdale": [
+          0.529,
+          0.455,
+          0.592
+        ],
+        "Boerum Hill": [
+          0.304,
+          0.168,
+          0.412
+        ],
+        "Borough Park": [
+          -0.056,
+          -0.135,
+          0.012
+        ],
+        "Breezy Point/Fort Tilden/Riis Beach": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Briarwood/Jamaica Hills": [
+          0.028,
+          -0.033,
+          0.073
+        ],
+        "Brighton Beach": [
+          0.107,
+          -0.06,
+          0.223
+        ],
+        "Bronx Park": [
+          -0.009,
+          -0.22,
+          0.081
+        ],
+        "Bronxdale": [
+          0.009,
+          -0.099,
+          0.046
+        ],
+        "Brooklyn Heights": [
+          0.252,
+          0.175,
+          0.32
+        ],
+        "Brooklyn Navy Yard": [
+          0.105,
+          -0.042,
+          0.143
+        ],
+        "Brownsville": [
+          0.345,
+          0.271,
+          0.409
+        ],
+        "Bushwick North": [
+          0.279,
+          0.199,
+          0.346
+        ],
+        "Bushwick South": [
+          0.224,
+          0.152,
+          0.291
+        ],
+        "Cambria Heights": [
+          -0.018,
+          -0.091,
+          0.042
+        ],
+        "Canarsie": [
+          0.311,
+          0.204,
+          0.397
+        ],
+        "Carroll Gardens": [
+          0.183,
+          0.081,
+          0.268
+        ],
+        "Central Harlem": [
+          0.507,
+          0.44,
+          0.564
+        ],
+        "Central Harlem North": [
+          0.434,
+          0.359,
+          0.502
+        ],
+        "Central Park": [
+          0.737,
+          0.703,
+          0.768
+        ],
+        "Chinatown": [
+          0.435,
+          0.337,
+          0.515
+        ],
+        "City Island": [
+          -0.129,
+          -0.359,
+          -0.024
+        ],
+        "Claremont/Bathgate": [
+          -0.03,
+          -0.086,
+          0.012
+        ],
+        "Clinton East": [
+          0.763,
+          0.725,
+          0.795
+        ],
+        "Clinton Hill": [
+          0.196,
+          0.132,
+          0.26
+        ],
+        "Clinton West": [
+          0.616,
+          0.56,
+          0.667
+        ],
+        "Co-Op City": [
+          -0.028,
+          -0.183,
+          0.08
+        ],
+        "Cobble Hill": [
+          0.211,
+          0.086,
+          0.301
+        ],
+        "College Point": [
+          0.024,
+          -0.474,
+          0.107
+        ],
+        "Columbia Street": [
+          -0.08,
+          -0.272,
+          0.038
+        ],
+        "Coney Island": [
+          0.054,
+          -0.023,
+          0.116
+        ],
+        "Corona": [
+          0.026,
+          -0.025,
+          0.052
+        ],
+        "Country Club": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Crotona Park East": [
+          0.003,
+          -0.051,
+          0.049
+        ],
+        "Crown Heights North": [
+          0.187,
+          0.122,
+          0.249
+        ],
+        "Crown Heights South": [
+          -0.016,
+          -0.157,
+          0.091
+        ],
+        "Cypress Hills": [
+          -0.013,
+          -0.084,
+          0.052
+        ],
+        "DUMBO/Vinegar Hill": [
+          0.266,
+          0.198,
+          0.337
+        ],
+        "Douglaston": [
+          -0.633,
+          -1.829,
+          -0.194
+        ],
+        "Downtown Brooklyn/MetroTech": [
+          0.325,
+          0.248,
+          0.392
+        ],
+        "Dyker Heights": [
+          -0.028,
+          -0.108,
+          0.039
+        ],
+        "East Chelsea": [
+          0.872,
+          0.85,
+          0.889
+        ],
+        "East Concourse/Concourse Village": [
+          0.019,
+          -0.044,
+          0.072
+        ],
+        "East Elmhurst": [
+          0.372,
+          0.29,
+          0.441
+        ],
+        "East Flatbush/Farragut": [
+          0.121,
+          0.057,
+          0.186
+        ],
+        "East Flatbush/Remsen Village": [
+          0.106,
+          0.039,
+          0.168
+        ],
+        "East Flushing": [
+          -0.018,
+          -0.113,
+          0.011
+        ],
+        "East Harlem North": [
+          0.497,
+          0.43,
+          0.552
+        ],
+        "East Harlem South": [
+          0.66,
+          0.618,
+          0.7
+        ],
+        "East New York": [
+          0.254,
+          0.181,
+          0.316
+        ],
+        "East New York/Pennsylvania Avenue": [
+          0.008,
+          -0.052,
+          0.059
+        ],
+        "East Tremont": [
+          0.001,
+          -0.05,
+          0.043
+        ],
+        "East Village": [
+          0.833,
+          0.787,
+          0.867
+        ],
+        "East Williamsburg": [
+          0.342,
+          0.279,
+          0.406
+        ],
+        "Eastchester": [
+          0.024,
+          -0.205,
+          0.085
+        ],
+        "Elmhurst": [
+          0.113,
+          0.049,
+          0.168
+        ],
+        "Elmhurst/Maspeth": [
+          0.018,
+          -0.061,
+          0.083
+        ],
+        "Erasmus": [
+          -0.113,
+          -0.25,
+          -0.018
+        ],
+        "Far Rockaway": [
+          0.033,
+          -0.041,
+          0.075
+        ],
+        "Financial District North": [
+          0.719,
+          0.689,
+          0.747
+        ],
+        "Financial District South": [
+          0.669,
+          0.63,
+          0.704
+        ],
+        "Flatbush/Ditmas Park": [
+          0.164,
+          0.069,
+          0.241
+        ],
+        "Flatiron": [
+          0.851,
+          0.824,
+          0.875
+        ],
+        "Flatlands": [
+          0.354,
+          0.277,
+          0.413
+        ],
+        "Flushing": [
+          -0.02,
+          -0.101,
+          0.052
+        ],
+        "Flushing Meadows-Corona Park": [
+          0.062,
+          0.011,
+          0.092
+        ],
+        "Fordham South": [
+          -0.023,
+          -0.109,
+          0.036
+        ],
+        "Forest Hills": [
+          -0.013,
+          -0.055,
+          0.028
+        ],
+        "Forest Park/Highland Park": [
+          -0.05,
+          -0.167,
+          -0.05
+        ],
+        "Fort Greene": [
+          0.194,
+          -0.003,
+          0.326
+        ],
+        "Fresh Meadows": [
+          -0.067,
+          -0.247,
+          0.082
+        ],
+        "Garment District": [
+          0.718,
+          0.661,
+          0.766
+        ],
+        "Glen Oaks": [
+          -0.134,
+          -0.344,
+          -0.074
+        ],
+        "Glendale": [
+          -0.069,
+          -0.166,
+          0.02
+        ],
+        "Gowanus": [
+          0.139,
+          0.029,
+          0.223
+        ],
+        "Gramercy": [
+          0.754,
+          0.709,
+          0.797
+        ],
+        "Gravesend": [
+          -0.0,
+          -0.09,
+          0.057
+        ],
+        "Greenpoint": [
+          0.562,
+          0.501,
+          0.623
+        ],
+        "Greenwich Village North": [
+          0.81,
+          0.779,
+          0.839
+        ],
+        "Greenwich Village South": [
+          0.868,
+          0.836,
+          0.891
+        ],
+        "Hamilton Heights": [
+          0.391,
+          0.32,
+          0.456
+        ],
+        "Hammels/Arverne": [
+          0.167,
+          0.087,
+          0.218
+        ],
+        "Highbridge": [
+          0.006,
+          -0.076,
+          0.07
+        ],
+        "Highbridge Park": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Hillcrest/Pomonok": [
+          -0.023,
+          -0.099,
+          0.03
+        ],
+        "Hollis": [
+          0.017,
+          -0.059,
+          0.058
+        ],
+        "Homecrest": [
+          -0.07,
+          -0.175,
+          0.001
+        ],
+        "Howard Beach": [
+          -0.011,
+          -0.073,
+          0.036
+        ],
+        "Hudson Sq": [
+          0.715,
+          0.668,
+          0.761
+        ],
+        "Hunts Point": [
+          -0.13,
+          -0.232,
+          -0.039
+        ],
+        "Inwood": [
+          0.019,
+          -0.045,
+          0.072
+        ],
+        "Inwood Hill Park": [
+          -0.206,
+          -0.379,
+          -0.146
+        ],
+        "JFK Airport": [
+          0.429,
+          0.351,
+          0.503
+        ],
+        "Jackson Heights": [
+          0.14,
+          0.08,
+          0.19
+        ],
+        "Jamaica": [
+          0.071,
+          0.021,
+          0.117
+        ],
+        "Jamaica Estates": [
+          -0.006,
+          -0.113,
+          0.089
+        ],
+        "Kensington": [
+          0.072,
+          0.001,
+          0.133
+        ],
+        "Kew Gardens": [
+          0.01,
+          -0.037,
+          0.052
+        ],
+        "Kew Gardens Hills": [
+          0.017,
+          -0.078,
+          0.077
+        ],
+        "Kingsbridge Heights": [
+          0.037,
+          -0.061,
+          0.08
+        ],
+        "Kips Bay": [
+          0.766,
+          0.729,
+          0.799
+        ],
+        "LaGuardia Airport": [
+          0.513,
+          0.43,
+          0.589
+        ],
+        "Laurelton": [
+          0.047,
+          -0.022,
+          0.094
+        ],
+        "Lenox Hill East": [
+          0.767,
+          0.732,
+          0.796
+        ],
+        "Lenox Hill West": [
+          0.859,
+          0.835,
+          0.881
+        ],
+        "Lincoln Square East": [
+          0.74,
+          0.692,
+          0.781
+        ],
+        "Lincoln Square West": [
+          0.771,
+          0.74,
+          0.798
+        ],
+        "Little Italy/NoLiTa": [
+          0.761,
+          0.722,
+          0.795
+        ],
+        "Long Island City/Hunters Point": [
+          0.275,
+          0.145,
+          0.374
+        ],
+        "Long Island City/Queens Plaza": [
+          0.107,
+          0.022,
+          0.186
+        ],
+        "Longwood": [
+          0.036,
+          -0.055,
+          0.083
+        ],
+        "Lower East Side": [
+          0.855,
+          0.823,
+          0.881
+        ],
+        "Madison": [
+          -0.08,
+          -0.164,
+          -0.02
+        ],
+        "Manhattan Beach": [
+          -0.021,
+          -0.099,
+          0.045
+        ],
+        "Manhattan Valley": [
+          0.74,
+          0.703,
+          0.772
+        ],
+        "Manhattanville": [
+          0.166,
+          0.054,
+          0.262
+        ],
+        "Marble Hill": [
+          -0.043,
+          -0.627,
+          0.06
+        ],
+        "Marine Park/Floyd Bennett Field": [
+          -0.471,
+          -0.693,
+          -0.155
+        ],
+        "Marine Park/Mill Basin": [
+          0.029,
+          -0.038,
+          0.097
+        ],
+        "Maspeth": [
+          0.211,
+          0.084,
+          0.357
+        ],
+        "Meatpacking/West Village West": [
+          0.769,
+          0.735,
+          0.803
+        ],
+        "Melrose South": [
+          -0.018,
+          -0.082,
+          0.042
+        ],
+        "Middle Village": [
+          -0.005,
+          -0.071,
+          0.048
+        ],
+        "Midtown Center": [
+          0.829,
+          0.806,
+          0.849
+        ],
+        "Midtown East": [
+          0.888,
+          0.87,
+          0.903
+        ],
+        "Midtown North": [
+          0.87,
+          0.848,
+          0.89
+        ],
+        "Midtown South": [
+          0.876,
+          0.851,
+          0.897
+        ],
+        "Midwood": [
+          -0.007,
+          -0.061,
+          0.036
+        ],
+        "Morningside Heights": [
+          0.337,
+          0.214,
+          0.442
+        ],
+        "Morrisania/Melrose": [
+          0.043,
+          -0.028,
+          0.089
+        ],
+        "Mott Haven/Port Morris": [
+          0.101,
+          0.041,
+          0.154
+        ],
+        "Mount Hope": [
+          0.004,
+          -0.077,
+          0.059
+        ],
+        "Murray Hill": [
+          0.884,
+          0.868,
+          0.899
+        ],
+        "Murray Hill-Queens": [
+          -0.01,
+          -0.118,
+          0.074
+        ],
+        "Newark Airport": [
+          -0.052,
+          -0.216,
+          0.056
+        ],
+        "North Corona": [
+          0.144,
+          0.005,
+          0.221
+        ],
+        "Norwood": [
+          -0.043,
+          -0.115,
+          0.017
+        ],
+        "Oakland Gardens": [
+          0.039,
+          -0.172,
+          0.083
+        ],
+        "Ocean Hill": [
+          0.223,
+          0.149,
+          0.281
+        ],
+        "Ocean Parkway South": [
+          -0.076,
+          -0.196,
+          -0.005
+        ],
+        "Old Astoria": [
+          0.125,
+          0.013,
+          0.219
+        ],
+        "Outside of NYC": [
+          -0.079,
+          -0.138,
+          -0.036
+        ],
+        "Ozone Park": [
+          -0.075,
+          -0.168,
+          0.002
+        ],
+        "Park Slope": [
+          0.28,
+          0.119,
+          0.374
+        ],
+        "Parkchester": [
+          -0.023,
+          -0.289,
+          0.109
+        ],
+        "Pelham Bay": [
+          -0.014,
+          -0.76,
+          0.143
+        ],
+        "Pelham Bay Park": [
+          -0.053,
+          -0.25,
+          -0.053
+        ],
+        "Pelham Parkway": [
+          -0.07,
+          -0.352,
+          0.036
+        ],
+        "Penn Station/Madison Sq West": [
+          0.6,
+          0.537,
+          0.653
+        ],
+        "Prospect Heights": [
+          0.163,
+          -0.048,
+          0.296
+        ],
+        "Prospect Park": [
+          -0.147,
+          -0.247,
+          -0.075
+        ],
+        "Prospect-Lefferts Gardens": [
+          0.082,
+          0.022,
+          0.138
+        ],
+        "Queens Village": [
+          -0.005,
+          -0.079,
+          0.058
+        ],
+        "Queensboro Hill": [
+          -0.033,
+          -0.111,
+          0.041
+        ],
+        "Queensbridge/Ravenswood": [
+          -0.165,
+          -0.268,
+          -0.079
+        ],
+        "Randalls Island": [
+          -0.035,
+          -0.109,
+          0.021
+        ],
+        "Red Hook": [
+          0.027,
+          -0.016,
+          0.064
+        ],
+        "Rego Park": [
+          0.042,
+          -0.024,
+          0.103
+        ],
+        "Richmond Hill": [
+          -0.023,
+          -0.08,
+          0.028
+        ],
+        "Ridgewood": [
+          0.159,
+          0.024,
+          0.245
+        ],
+        "Riverdale/North Riverdale/Fieldston": [
+          -0.061,
+          -0.122,
+          -0.025
+        ],
+        "Rockaway Park": [
+          -0.124,
+          -0.239,
+          -0.053
+        ],
+        "Roosevelt Island": [
+          0.03,
+          -0.057,
+          0.088
+        ],
+        "Rosedale": [
+          -0.066,
+          -0.161,
+          0.008
+        ],
+        "Saint Albans": [
+          -0.001,
+          -0.08,
+          0.061
+        ],
+        "Saint Michaels Cemetery/Woodside": [
+          0.062,
+          -0.023,
+          0.157
+        ],
+        "Schuylerville/Edgewater Park": [
+          0.035,
+          -0.046,
+          0.109
+        ],
+        "Seaport": [
+          0.583,
+          0.537,
+          0.626
+        ],
+        "Sheepshead Bay": [
+          0.074,
+          -0.013,
+          0.144
+        ],
+        "SoHo": [
+          0.758,
+          0.724,
+          0.789
+        ],
+        "Soundview/Bruckner": [
+          0.088,
+          -0.058,
+          0.166
+        ],
+        "Soundview/Castle Hill": [
+          0.069,
+          0.0,
+          0.128
+        ],
+        "South Jamaica": [
+          0.039,
+          -0.011,
+          0.084
+        ],
+        "South Ozone Park": [
+          0.011,
+          -0.033,
+          0.052
+        ],
+        "South Williamsburg": [
+          0.092,
+          -0.082,
+          0.229
+        ],
+        "Springfield Gardens North": [
+          0.032,
+          -0.035,
+          0.084
+        ],
+        "Springfield Gardens South": [
+          -0.051,
+          -0.111,
+          -0.004
+        ],
+        "Spuyten Duyvil/Kingsbridge": [
+          -0.023,
+          -0.104,
+          0.049
+        ],
+        "Starrett City": [
+          0.075,
+          0.009,
+          0.132
+        ],
+        "Steinway": [
+          0.237,
+          0.126,
+          0.352
+        ],
+        "Stuy Town/Peter Cooper Village": [
+          0.352,
+          0.282,
+          0.411
+        ],
+        "Stuyvesant Heights": [
+          0.124,
+          0.05,
+          0.199
+        ],
+        "Sunnyside": [
+          0.209,
+          0.147,
+          0.27
+        ],
+        "Sunset Park East": [
+          -0.116,
+          -0.241,
+          0.013
+        ],
+        "Sunset Park West": [
+          0.012,
+          -0.067,
+          0.063
+        ],
+        "Sutton Place/Turtle Bay North": [
+          0.839,
+          0.817,
+          0.86
+        ],
+        "Times Sq/Theatre District": [
+          0.754,
+          0.717,
+          0.786
+        ],
+        "TriBeCa/Civic Center": [
+          0.832,
+          0.801,
+          0.861
+        ],
+        "Two Bridges/Seward Park": [
+          0.424,
+          0.313,
+          0.518
+        ],
+        "UN/Turtle Bay South": [
+          0.838,
+          0.816,
+          0.857
+        ],
+        "Union Sq": [
+          0.892,
+          0.873,
+          0.909
+        ],
+        "University Heights/Morris Heights": [
+          0.008,
+          -0.065,
+          0.076
+        ],
+        "Unknown": [
+          0.677,
+          0.63,
+          0.719
+        ],
+        "Upper East Side North": [
+          0.816,
+          0.792,
+          0.839
+        ],
+        "Upper East Side South": [
+          0.863,
+          0.845,
+          0.879
+        ],
+        "Upper West Side North": [
+          0.75,
+          0.715,
+          0.781
+        ],
+        "Upper West Side South": [
+          0.811,
+          0.779,
+          0.836
+        ],
+        "Van Cortlandt Park": [
+          -0.113,
+          -0.335,
+          -0.053
+        ],
+        "Van Cortlandt Village": [
+          0.037,
+          -0.033,
+          0.091
+        ],
+        "Van Nest/Morris Park": [
+          -0.152,
+          -0.372,
+          -0.073
+        ],
+        "Washington Heights North": [
+          0.134,
+          0.069,
+          0.197
+        ],
+        "Washington Heights South": [
+          0.29,
+          0.221,
+          0.348
+        ],
+        "West Chelsea/Hudson Yards": [
+          0.709,
+          0.664,
+          0.75
+        ],
+        "West Concourse": [
+          0.156,
+          0.004,
+          0.305
+        ],
+        "West Farms/Bronx River": [
+          -0.003,
+          -0.135,
+          0.069
+        ],
+        "West Village": [
+          0.854,
+          0.821,
+          0.881
+        ],
+        "Westchester Village/Unionport": [
+          0.029,
+          -0.045,
+          0.088
+        ],
+        "Whitestone": [
+          -0.027,
+          -0.248,
+          0.028
+        ],
+        "Willets Point": [
+          -0.033,
+          -0.237,
+          0.061
+        ],
+        "Williamsbridge/Olinville": [
+          0.006,
+          -0.098,
+          0.055
+        ],
+        "Williamsburg (North Side)": [
+          0.641,
+          0.581,
+          0.709
+        ],
+        "Williamsburg (South Side)": [
+          0.576,
+          0.5,
+          0.641
+        ],
+        "Windsor Terrace": [
+          0.004,
+          -0.054,
+          0.088
+        ],
+        "Woodhaven": [
+          0.078,
+          0.015,
+          0.141
+        ],
+        "Woodlawn/Wakefield": [
+          -0.011,
+          -0.101,
+          0.067
+        ],
+        "Woodside": [
+          0.158,
+          0.069,
+          0.229
+        ],
+        "World Trade Center": [
+          0.757,
+          0.728,
+          0.785
+        ],
+        "Yorkville East": [
+          0.807,
+          0.776,
+          0.832
+        ],
+        "Yorkville West": [
+          0.748,
+          0.708,
+          0.782
+        ]
+      },
+      "n_params": 9537,
+      "epochs_trained": 120
+    },
+    "gwn": {
+      "overall": {
+        "rmse": 17.68806266784668,
+        "r2": 0.9445441961288452,
+        "mae": 7.745765209197998,
+        "n_test": 78904
+      },
+      "temporal_ratio_ci": [
+        4.028,
+        3.411,
+        4.807
+      ],
+      "high_demand_degradation_ci": [
+        292.438,
+        278.566,
+        307.088
+      ],
+      "per_zone_r2_ci": {
+        "Allerton/Pelham Gardens": [
+          -0.16,
+          -0.358,
+          -0.049
+        ],
+        "Alphabet City": [
+          0.67,
+          0.524,
+          0.76
+        ],
+        "Arrochar/Fort Wadsworth": [
+          -0.08,
+          -0.21,
+          -0.022
+        ],
+        "Astoria": [
+          0.35,
+          0.264,
+          0.422
+        ],
+        "Astoria Park": [
+          -0.126,
+          -0.287,
+          -0.038
+        ],
+        "Auburndale": [
+          -0.02,
+          -0.622,
+          0.004
+        ],
+        "Baisley Park": [
+          0.107,
+          0.046,
+          0.164
+        ],
+        "Bath Beach": [
+          -0.077,
+          -0.645,
+          0.009
+        ],
+        "Battery Park": [
+          0.329,
+          0.258,
+          0.394
+        ],
+        "Battery Park City": [
+          0.812,
+          0.789,
+          0.835
+        ],
+        "Bay Ridge": [
+          0.046,
+          -0.012,
+          0.1
+        ],
+        "Bay Terrace/Fort Totten": [
+          -0.183,
+          -0.373,
+          -0.065
+        ],
+        "Bayside": [
+          0.035,
+          -0.427,
+          0.112
+        ],
+        "Bedford": [
+          0.178,
+          0.105,
+          0.255
+        ],
+        "Bedford Park": [
+          -0.002,
+          -0.057,
+          0.042
+        ],
+        "Bellerose": [
+          -0.06,
+          -0.139,
+          -0.003
+        ],
+        "Belmont": [
+          -0.035,
+          -0.138,
+          0.003
+        ],
+        "Bensonhurst East": [
+          -0.046,
+          -0.168,
+          0.02
+        ],
+        "Bensonhurst West": [
+          0.076,
+          -0.05,
+          0.161
+        ],
+        "Bloomfield/Emerson Hill": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Bloomingdale": [
+          0.669,
+          0.612,
+          0.715
+        ],
+        "Boerum Hill": [
+          0.379,
+          0.251,
+          0.488
+        ],
+        "Borough Park": [
+          0.005,
+          -0.054,
+          0.055
+        ],
+        "Breezy Point/Fort Tilden/Riis Beach": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Briarwood/Jamaica Hills": [
+          0.089,
+          -0.021,
+          0.168
+        ],
+        "Brighton Beach": [
+          0.011,
+          -0.283,
+          0.183
+        ],
+        "Bronx Park": [
+          -0.046,
+          -0.421,
+          0.058
+        ],
+        "Bronxdale": [
+          -0.007,
+          -0.214,
+          0.074
+        ],
+        "Brooklyn Heights": [
+          0.277,
+          0.18,
+          0.368
+        ],
+        "Brooklyn Navy Yard": [
+          0.229,
+          0.101,
+          0.355
+        ],
+        "Brownsville": [
+          0.353,
+          0.271,
+          0.428
+        ],
+        "Bushwick North": [
+          0.489,
+          0.324,
+          0.6
+        ],
+        "Bushwick South": [
+          0.345,
+          0.21,
+          0.444
+        ],
+        "Cambria Heights": [
+          0.009,
+          -0.073,
+          0.078
+        ],
+        "Canarsie": [
+          0.279,
+          0.178,
+          0.357
+        ],
+        "Carroll Gardens": [
+          0.197,
+          0.042,
+          0.306
+        ],
+        "Central Harlem": [
+          0.65,
+          0.595,
+          0.702
+        ],
+        "Central Harlem North": [
+          0.501,
+          0.421,
+          0.573
+        ],
+        "Central Park": [
+          0.763,
+          0.717,
+          0.803
+        ],
+        "Chinatown": [
+          0.521,
+          0.434,
+          0.592
+        ],
+        "City Island": [
+          -0.115,
+          -0.333,
+          -0.023
+        ],
+        "Claremont/Bathgate": [
+          -0.067,
+          -0.169,
+          0.004
+        ],
+        "Clinton East": [
+          0.801,
+          0.763,
+          0.831
+        ],
+        "Clinton Hill": [
+          0.25,
+          0.155,
+          0.339
+        ],
+        "Clinton West": [
+          0.692,
+          0.646,
+          0.734
+        ],
+        "Co-Op City": [
+          0.015,
+          -0.221,
+          0.171
+        ],
+        "Cobble Hill": [
+          0.236,
+          0.062,
+          0.363
+        ],
+        "College Point": [
+          0.022,
+          -0.734,
+          0.192
+        ],
+        "Columbia Street": [
+          -0.036,
+          -0.158,
+          0.057
+        ],
+        "Coney Island": [
+          0.023,
+          -0.047,
+          0.071
+        ],
+        "Corona": [
+          0.012,
+          -0.097,
+          0.087
+        ],
+        "Country Club": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Crotona Park East": [
+          -0.03,
+          -0.108,
+          0.008
+        ],
+        "Crown Heights North": [
+          0.266,
+          0.189,
+          0.341
+        ],
+        "Crown Heights South": [
+          0.094,
+          -0.021,
+          0.186
+        ],
+        "Cypress Hills": [
+          0.023,
+          -0.052,
+          0.09
+        ],
+        "DUMBO/Vinegar Hill": [
+          0.3,
+          0.224,
+          0.366
+        ],
+        "Douglaston": [
+          -0.679,
+          -2.317,
+          -0.117
+        ],
+        "Downtown Brooklyn/MetroTech": [
+          0.302,
+          0.205,
+          0.384
+        ],
+        "Dyker Heights": [
+          -0.006,
+          -0.1,
+          0.035
+        ],
+        "East Chelsea": [
+          0.887,
+          0.869,
+          0.903
+        ],
+        "East Concourse/Concourse Village": [
+          0.013,
+          -0.115,
+          0.105
+        ],
+        "East Elmhurst": [
+          0.497,
+          0.429,
+          0.56
+        ],
+        "East Flatbush/Farragut": [
+          0.171,
+          0.098,
+          0.241
+        ],
+        "East Flatbush/Remsen Village": [
+          0.194,
+          0.122,
+          0.265
+        ],
+        "East Flushing": [
+          0.002,
+          -0.092,
+          0.048
+        ],
+        "East Harlem North": [
+          0.621,
+          0.558,
+          0.673
+        ],
+        "East Harlem South": [
+          0.799,
+          0.769,
+          0.826
+        ],
+        "East New York": [
+          0.268,
+          0.183,
+          0.342
+        ],
+        "East New York/Pennsylvania Avenue": [
+          0.033,
+          -0.076,
+          0.109
+        ],
+        "East Tremont": [
+          0.005,
+          -0.091,
+          0.058
+        ],
+        "East Village": [
+          0.895,
+          0.867,
+          0.916
+        ],
+        "East Williamsburg": [
+          0.493,
+          0.432,
+          0.553
+        ],
+        "Eastchester": [
+          -0.03,
+          -0.34,
+          0.038
+        ],
+        "Elmhurst": [
+          0.181,
+          0.056,
+          0.277
+        ],
+        "Elmhurst/Maspeth": [
+          0.047,
+          -0.082,
+          0.153
+        ],
+        "Erasmus": [
+          0.026,
+          -0.043,
+          0.085
+        ],
+        "Far Rockaway": [
+          0.012,
+          -0.107,
+          0.083
+        ],
+        "Financial District North": [
+          0.773,
+          0.744,
+          0.799
+        ],
+        "Financial District South": [
+          0.727,
+          0.688,
+          0.763
+        ],
+        "Flatbush/Ditmas Park": [
+          0.144,
+          0.039,
+          0.228
+        ],
+        "Flatiron": [
+          0.867,
+          0.842,
+          0.889
+        ],
+        "Flatlands": [
+          0.389,
+          0.276,
+          0.474
+        ],
+        "Flushing": [
+          0.123,
+          0.015,
+          0.208
+        ],
+        "Flushing Meadows-Corona Park": [
+          0.139,
+          -0.004,
+          0.215
+        ],
+        "Fordham South": [
+          0.009,
+          -0.052,
+          0.067
+        ],
+        "Forest Hills": [
+          0.082,
+          0.008,
+          0.172
+        ],
+        "Forest Park/Highland Park": [
+          -0.05,
+          -0.167,
+          -0.05
+        ],
+        "Fort Greene": [
+          0.316,
+          0.152,
+          0.437
+        ],
+        "Fresh Meadows": [
+          0.051,
+          -0.05,
+          0.136
+        ],
+        "Garment District": [
+          0.74,
+          0.685,
+          0.788
+        ],
+        "Glen Oaks": [
+          -0.071,
+          -0.439,
+          0.112
+        ],
+        "Glendale": [
+          -0.007,
+          -0.103,
+          0.079
+        ],
+        "Gowanus": [
+          0.197,
+          -0.046,
+          0.358
+        ],
+        "Gramercy": [
+          0.829,
+          0.795,
+          0.859
+        ],
+        "Gravesend": [
+          -0.012,
+          -0.163,
+          0.076
+        ],
+        "Greenpoint": [
+          0.64,
+          0.534,
+          0.726
+        ],
+        "Greenwich Village North": [
+          0.864,
+          0.837,
+          0.888
+        ],
+        "Greenwich Village South": [
+          0.917,
+          0.895,
+          0.932
+        ],
+        "Hamilton Heights": [
+          0.448,
+          0.351,
+          0.526
+        ],
+        "Hammels/Arverne": [
+          0.208,
+          0.059,
+          0.317
+        ],
+        "Highbridge": [
+          0.013,
+          -0.059,
+          0.072
+        ],
+        "Highbridge Park": [
+          NaN,
+          NaN,
+          NaN
+        ],
+        "Hillcrest/Pomonok": [
+          -0.073,
+          -0.291,
+          0.029
+        ],
+        "Hollis": [
+          0.012,
+          -0.173,
+          0.07
+        ],
+        "Homecrest": [
+          -0.036,
+          -0.131,
+          0.027
+        ],
+        "Howard Beach": [
+          0.01,
+          -0.075,
+          0.073
+        ],
+        "Hudson Sq": [
+          0.77,
+          0.734,
+          0.804
+        ],
+        "Hunts Point": [
+          -0.053,
+          -0.152,
+          0.038
+        ],
+        "Inwood": [
+          -0.059,
+          -0.194,
+          0.035
+        ],
+        "Inwood Hill Park": [
+          -0.041,
+          -0.307,
+          0.048
+        ],
+        "JFK Airport": [
+          0.813,
+          0.775,
+          0.844
+        ],
+        "Jackson Heights": [
+          0.203,
+          0.064,
+          0.304
+        ],
+        "Jamaica": [
+          0.124,
+          0.037,
+          0.202
+        ],
+        "Jamaica Estates": [
+          0.007,
+          -0.074,
+          0.071
+        ],
+        "Kensington": [
+          0.093,
+          -0.035,
+          0.209
+        ],
+        "Kew Gardens": [
+          -0.007,
+          -0.098,
+          0.06
+        ],
+        "Kew Gardens Hills": [
+          0.044,
+          -0.1,
+          0.138
+        ],
+        "Kingsbridge Heights": [
+          0.053,
+          -0.095,
+          0.143
+        ],
+        "Kips Bay": [
+          0.807,
+          0.777,
+          0.835
+        ],
+        "LaGuardia Airport": [
+          0.731,
+          0.679,
+          0.775
+        ],
+        "Laurelton": [
+          0.053,
+          -0.046,
+          0.099
+        ],
+        "Lenox Hill East": [
+          0.9,
+          0.885,
+          0.914
+        ],
+        "Lenox Hill West": [
+          0.906,
+          0.889,
+          0.92
+        ],
+        "Lincoln Square East": [
+          0.757,
+          0.708,
+          0.798
+        ],
+        "Lincoln Square West": [
+          0.872,
+          0.851,
+          0.89
+        ],
+        "Little Italy/NoLiTa": [
+          0.834,
+          0.809,
+          0.859
+        ],
+        "Long Island City/Hunters Point": [
+          0.393,
+          0.283,
+          0.479
+        ],
+        "Long Island City/Queens Plaza": [
+          0.161,
+          0.056,
+          0.242
+        ],
+        "Longwood": [
+          0.036,
+          -0.076,
+          0.112
+        ],
+        "Lower East Side": [
+          0.911,
+          0.886,
+          0.93
+        ],
+        "Madison": [
+          -0.019,
+          -0.094,
+          0.037
+        ],
+        "Manhattan Beach": [
+          0.011,
+          -0.059,
+          0.064
+        ],
+        "Manhattan Valley": [
+          0.887,
+          0.868,
+          0.904
+        ],
+        "Manhattanville": [
+          0.325,
+          0.228,
+          0.405
+        ],
+        "Marble Hill": [
+          -0.058,
+          -0.727,
+          -0.017
+        ],
+        "Marine Park/Floyd Bennett Field": [
+          -0.656,
+          -1.026,
+          -0.185
+        ],
+        "Marine Park/Mill Basin": [
+          0.066,
+          0.001,
+          0.128
+        ],
+        "Maspeth": [
+          0.436,
+          0.28,
+          0.524
+        ],
+        "Meatpacking/West Village West": [
+          0.849,
+          0.824,
+          0.873
+        ],
+        "Melrose South": [
+          0.043,
+          -0.026,
+          0.104
+        ],
+        "Middle Village": [
+          0.023,
+          -0.091,
+          0.108
+        ],
+        "Midtown Center": [
+          0.925,
+          0.91,
+          0.939
+        ],
+        "Midtown East": [
+          0.913,
+          0.895,
+          0.929
+        ],
+        "Midtown North": [
+          0.925,
+          0.91,
+          0.937
+        ],
+        "Midtown South": [
+          0.876,
+          0.85,
+          0.898
+        ],
+        "Midwood": [
+          0.064,
+          0.028,
+          0.088
+        ],
+        "Morningside Heights": [
+          0.636,
+          0.575,
+          0.688
+        ],
+        "Morrisania/Melrose": [
+          0.06,
+          -0.058,
+          0.128
+        ],
+        "Mott Haven/Port Morris": [
+          0.101,
+          0.01,
+          0.179
+        ],
+        "Mount Hope": [
+          0.012,
+          -0.122,
+          0.094
+        ],
+        "Murray Hill": [
+          0.917,
+          0.904,
+          0.929
+        ],
+        "Murray Hill-Queens": [
+          0.056,
+          -0.067,
+          0.16
+        ],
+        "Newark Airport": [
+          0.028,
+          -0.138,
+          0.117
+        ],
+        "North Corona": [
+          0.136,
+          -0.022,
+          0.239
+        ],
+        "Norwood": [
+          -0.017,
+          -0.074,
+          0.007
+        ],
+        "Oakland Gardens": [
+          -0.029,
+          -0.449,
+          0.004
+        ],
+        "Ocean Hill": [
+          0.272,
+          0.178,
+          0.35
+        ],
+        "Ocean Parkway South": [
+          -0.005,
+          -0.155,
+          0.04
+        ],
+        "Old Astoria": [
+          0.196,
+          0.088,
+          0.284
+        ],
+        "Outside of NYC": [
+          -0.103,
+          -0.231,
+          -0.033
+        ],
+        "Ozone Park": [
+          -0.075,
+          -0.187,
+          -0.017
+        ],
+        "Park Slope": [
+          0.381,
+          0.172,
+          0.503
+        ],
+        "Parkchester": [
+          -0.112,
+          -0.489,
+          0.066
+        ],
+        "Pelham Bay": [
+          -0.05,
+          -0.751,
+          0.075
+        ],
+        "Pelham Bay Park": [
+          -0.053,
+          -0.251,
+          -0.053
+        ],
+        "Pelham Parkway": [
+          -0.069,
+          -0.456,
+          0.129
+        ],
+        "Penn Station/Madison Sq West": [
+          0.609,
+          0.543,
+          0.667
+        ],
+        "Prospect Heights": [
+          0.181,
+          -0.114,
+          0.36
+        ],
+        "Prospect Park": [
+          -0.018,
+          -0.105,
+          0.083
+        ],
+        "Prospect-Lefferts Gardens": [
+          0.126,
+          0.047,
+          0.198
+        ],
+        "Queens Village": [
+          -0.034,
+          -0.116,
+          0.021
+        ],
+        "Queensboro Hill": [
+          0.052,
+          -0.027,
+          0.125
+        ],
+        "Queensbridge/Ravenswood": [
+          -0.08,
+          -0.17,
+          -0.002
+        ],
+        "Randalls Island": [
+          0.01,
+          -0.093,
+          0.067
+        ],
+        "Red Hook": [
+          0.264,
+          0.133,
+          0.378
+        ],
+        "Rego Park": [
+          0.112,
+          0.04,
+          0.171
+        ],
+        "Richmond Hill": [
+          0.03,
+          -0.039,
+          0.091
+        ],
+        "Ridgewood": [
+          0.186,
+          0.059,
+          0.27
+        ],
+        "Riverdale/North Riverdale/Fieldston": [
+          0.016,
+          -0.036,
+          0.048
+        ],
+        "Rockaway Park": [
+          0.011,
+          -0.069,
+          0.103
+        ],
+        "Roosevelt Island": [
+          -0.013,
+          -0.181,
+          0.065
+        ],
+        "Rosedale": [
+          -0.04,
+          -0.14,
+          0.029
+        ],
+        "Saint Albans": [
+          0.003,
+          -0.108,
+          0.076
+        ],
+        "Saint Michaels Cemetery/Woodside": [
+          -0.112,
+          -0.251,
+          0.058
+        ],
+        "Schuylerville/Edgewater Park": [
+          0.118,
+          0.01,
+          0.272
+        ],
+        "Seaport": [
+          0.638,
+          0.587,
+          0.682
+        ],
+        "Sheepshead Bay": [
+          0.08,
+          -0.017,
+          0.163
+        ],
+        "SoHo": [
+          0.815,
+          0.786,
+          0.841
+        ],
+        "Soundview/Bruckner": [
+          0.108,
+          -0.186,
+          0.246
+        ],
+        "Soundview/Castle Hill": [
+          0.136,
+          0.017,
+          0.239
+        ],
+        "South Jamaica": [
+          0.102,
+          0.005,
+          0.171
+        ],
+        "South Ozone Park": [
+          0.046,
+          -0.018,
+          0.104
+        ],
+        "South Williamsburg": [
+          -0.12,
+          -0.54,
+          0.161
+        ],
+        "Springfield Gardens North": [
+          0.01,
+          -0.112,
+          0.1
+        ],
+        "Springfield Gardens South": [
+          0.041,
+          -0.011,
+          0.086
+        ],
+        "Spuyten Duyvil/Kingsbridge": [
+          -0.001,
+          -0.108,
+          0.102
+        ],
+        "Starrett City": [
+          0.111,
+          0.016,
+          0.186
+        ],
+        "Steinway": [
+          0.237,
+          0.144,
+          0.324
+        ],
+        "Stuy Town/Peter Cooper Village": [
+          0.452,
+          0.38,
+          0.512
+        ],
+        "Stuyvesant Heights": [
+          0.182,
+          0.102,
+          0.262
+        ],
+        "Sunnyside": [
+          0.291,
+          0.217,
+          0.359
+        ],
+        "Sunset Park East": [
+          0.002,
+          -0.067,
+          0.049
+        ],
+        "Sunset Park West": [
+          0.248,
+          0.001,
+          0.368
+        ],
+        "Sutton Place/Turtle Bay North": [
+          0.878,
+          0.859,
+          0.895
+        ],
+        "Times Sq/Theatre District": [
+          0.811,
+          0.777,
+          0.84
+        ],
+        "TriBeCa/Civic Center": [
+          0.867,
+          0.843,
+          0.888
+        ],
+        "Two Bridges/Seward Park": [
+          0.493,
+          0.408,
+          0.569
+        ],
+        "UN/Turtle Bay South": [
+          0.869,
+          0.85,
+          0.887
+        ],
+        "Union Sq": [
+          0.92,
+          0.906,
+          0.932
+        ],
+        "University Heights/Morris Heights": [
+          0.056,
+          -0.01,
+          0.112
+        ],
+        "Unknown": [
+          0.665,
+          0.619,
+          0.706
+        ],
+        "Upper East Side North": [
+          0.924,
+          0.913,
+          0.934
+        ],
+        "Upper East Side South": [
+          0.916,
+          0.903,
+          0.927
+        ],
+        "Upper West Side North": [
+          0.897,
+          0.878,
+          0.914
+        ],
+        "Upper West Side South": [
+          0.903,
+          0.885,
+          0.919
+        ],
+        "Van Cortlandt Park": [
+          -0.113,
+          -0.334,
+          -0.052
+        ],
+        "Van Cortlandt Village": [
+          0.057,
+          -0.034,
+          0.14
+        ],
+        "Van Nest/Morris Park": [
+          -0.149,
+          -0.494,
+          0.0
+        ],
+        "Washington Heights North": [
+          0.194,
+          0.077,
+          0.284
+        ],
+        "Washington Heights South": [
+          0.332,
+          0.254,
+          0.403
+        ],
+        "West Chelsea/Hudson Yards": [
+          0.799,
+          0.769,
+          0.828
+        ],
+        "West Concourse": [
+          0.113,
+          -0.056,
+          0.275
+        ],
+        "West Farms/Bronx River": [
+          -0.104,
+          -0.368,
+          0.017
+        ],
+        "West Village": [
+          0.894,
+          0.868,
+          0.916
+        ],
+        "Westchester Village/Unionport": [
+          0.022,
+          -0.086,
+          0.091
+        ],
+        "Whitestone": [
+          0.062,
+          -0.313,
+          0.158
+        ],
+        "Willets Point": [
+          -0.069,
+          -0.289,
+          -0.02
+        ],
+        "Williamsbridge/Olinville": [
+          -0.023,
+          -0.201,
+          0.06
+        ],
+        "Williamsburg (North Side)": [
+          0.733,
+          0.679,
+          0.786
+        ],
+        "Williamsburg (South Side)": [
+          0.621,
+          0.53,
+          0.692
+        ],
+        "Windsor Terrace": [
+          -0.016,
+          -0.11,
+          0.042
+        ],
+        "Woodhaven": [
+          0.051,
+          -0.078,
+          0.142
+        ],
+        "Woodlawn/Wakefield": [
+          0.031,
+          -0.095,
+          0.133
+        ],
+        "Woodside": [
+          0.21,
+          0.082,
+          0.312
+        ],
+        "World Trade Center": [
+          0.835,
+          0.811,
+          0.856
+        ],
+        "Yorkville East": [
+          0.886,
+          0.868,
+          0.903
+        ],
+        "Yorkville West": [
+          0.883,
+          0.862,
+          0.901
+        ]
+      },
+      "n_params": 25393,
+      "epochs_trained": 120
+    }
+  }
+}

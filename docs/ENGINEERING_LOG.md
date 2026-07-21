@@ -245,7 +245,39 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   suite 47 passed.
 
 
-## Phase 3 — ST-HAE: The Real Model  ✅ (trained + full ablation on two cities, on Kaggle)
+## Phase 3 — ST-HAE: The Real Model  ✅ (trained; ablation + ST-GNN baselines across 3 grids, on Kaggle GPU)
+
+### E-017 · 2026-07-21 · [P3] ⭐ Fine-grid retry + ST-GNN baselines (Kaggle GPU): spatial GCN hurts at every scale; ST-HAE−spatial beats STGCN & Graph WaveNet
+- **What ran (on GPU this time):** added STGCN + Graph WaveNet (`src/st_gnn_baselines.py`, sharing
+  the ST-HAE forward signature + eval harness) and a fine ~260-zone NYC TLC grid
+  (`nyc_taxi_zones.csv.gz`). Kaggle kernel v3 ran all variants+baselines on 3 grids.
+  `results/st_hae_{chicago,nyc,nyc_zones}.json`.
+- **GPU fix that finally worked:** the P100 (sm_60) is incompatible with Kaggle's default
+  torch 2.10+cu128 (sm_70+). The kernel now detects "P100" via `nvidia-smi` *before* importing torch
+  and installs `torch==2.4.1+cu121` (includes sm_60). Result: **Device: cuda** on all three grids
+  (torchvision/torchaudio version warnings are harmless — unused). CPU fallback still guards the
+  no-GPU case.
+- **Memory refactor (required for 260 nodes):** replaced materialized `[T-L,N,L,C]` windows (~4 GB at
+  260 zones) with vectorized on-the-fly `gather_batch` over a `[T,N,C]` tensor. Also lighter for the
+  coarse grids.
+- **⭐ Findings (GPU numbers, now canonical):**
+  1. **Spatial GCN hurts at EVERY granularity.** `no_spatial` is the best variant on all three grids:
+     Chicago R² 0.9603→0.9684, NYC boroughs 0.9805→0.9902, **fine 260-zone 0.9552→0.9657**. The
+     finer grid did NOT rescue spatial — the correlation-graph GCN over-smooths at every scale.
+  2. **ST-HAE−spatial beats both published ST-GNN baselines on all 3 grids** (Graph WaveNet
+     0.9583/0.9811/0.9445; STGCN 0.8570/0.9675/0.9081). The more spatial-conv-heavy the baseline, the
+     worse — STGCN weakest — independently corroborating (1).
+  3. **RandomForest collapses on the fine grid (R²=0.64)** while every L=24 neural model stays ≥0.94 —
+     shows the temporal/sequential modeling is what carries the fine grid.
+- **Discrepancy vs E-016 (CPU):** GPU numbers are slightly better (Chicago no_spatial 0.9608→0.9684)
+  because GPU training isn't bit-identical to CPU; the qualitative story is unchanged and stronger.
+  GPU B=2000 numbers replace the CPU ones as canonical in §5.
+- **Honest caveat recorded:** single seed per cell — aggregate R²/RMSE are point estimates (robustness
+  columns keep bootstrap CIs); multi-seed variance is remaining work.
+- **Learning:** the negative result got *stronger* under more scrutiny (finer grid + two ST-GNN
+  baselines that themselves rely on spatial conv and underperform). Chasing a positive "spatial helps"
+  result would have meant ignoring three converging pieces of evidence. Best next attempt: learned
+  sparse / distance-aware adjacency instead of correlation-thresholded. [[E-016]]
 
 ### E-016 · 2026-07-21 · [P3] ⭐ Ablation (both cities, on Kaggle): the spatial GCN HURTS — honest negative result
 - **What ran:** pushed a private Kaggle *script kernel* (`kunalchandola/st-hae-training`) via the

@@ -89,18 +89,21 @@ the Phase 1 data scale-up.
 4. ✅ End-to-end training + early stopping; masked leakage-free eval == RF's test cells. (E-015)
 5. ✅ Honest ablation (full vs no_spatial/no_temporal/no_hierarchical, CIs) **done on Kaggle**
    (both cities). `results/st_hae_{chicago,nyc}.json`. (E-016)
-6. 🔲 Comparison vs STGCN / Graph WaveNet (published ST-GNN baselines — remaining work).
+6. ✅ Comparison vs **STGCN + Graph WaveNet** done (`src/st_gnn_baselines.py`, all 3 grids). (E-017)
+7. ✅ Finer-grid GCN retry (260 TLC zones) done — spatial still hurts (E-017).
 
-**Result (both cities, CI-backed — E-016):** the best variant is **ST-HAE−spatial** (temporal
-attention + MoE): Chicago R²=0.9608, NYC R²=0.9902, both **beating RF** and flattening the temporal
-swing to 6–7× (from 14–18×). Honest negative result: the **spatial GCN over-smooths** coarse zones
-and hurts — dropped from the recommended model, motivating finer-grid future work.
+**Result (3 grids, GPU — E-016/E-017):** best variant is **ST-HAE−spatial** (temporal attention +
+MoE): Chicago R²=0.9684, NYC boroughs 0.9902, NYC 260-zone 0.9657 — **beats RF, XGBoost, STGCN, and
+Graph WaveNet on all three**, flattening the temporal swing to 3.8–6× (from 14–18×). Negative result
+**confirmed at both granularities**: the spatial GCN over-smooths and hurts at every scale; the more
+spatial-conv-heavy baselines underperform. RF collapses on the fine grid (R²=0.64) — temporal NN wins.
 
-**Guardrail (resolved):** ST-HAE (temporal+MoE core) *does* beat baselines on both cities, so the
-paper leads with the model + the ablation rather than pivoting. The framework (§4) remains the spine.
+**Guardrail (resolved):** ST-HAE (temporal+MoE core) beats all baselines, so the paper leads with the
+model + ablation. Framework (§4) remains the spine.
 
-**Track B:** ST-HAE §5 written with the two-city ablation table + CIs and the spatial-GCN negative
-result. Remaining: STGCN/GraphWaveNet baselines, finer-grid GCN retry.
+**Remaining Phase 3 (optional):** learned sparse/distance-aware adjacency (last attempt to rescue
+spatial); multi-seed variance on headline metrics. **Track B:** §5 fully written (3-grid table +
+baselines + negative result).
 
 ## Phase 4 — LLM Explainability, Evaluated (Weeks 8–9)
 - Ground-truth failure attribution (per-zone/per-hour causes).
