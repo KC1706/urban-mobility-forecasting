@@ -26,3 +26,4 @@ data/Taxi_Trips_*.csv
 
 # Logs
 *.log
+data/processed/nyc_taxi_zones.csv

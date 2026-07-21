@@ -10,6 +10,9 @@ forecasting + robustness pipeline runs on both. See `docs/PAPER.md` §3.
   dataset). 7,182 hourly cells, Jan 1 – Feb 1 2026.
 - `processed/nyc_taxi_boroughs.csv` — **NYC yellow taxi, Jan–Jun 2024**, 6 NYC boroughs.
   22,346 hourly cells, 19.66M trips (second city / longer window).
+- `processed/nyc_taxi_zones.csv.gz` — **NYC fine grid**: the ~260 official TLC zones (gzipped,
+  491,238 hourly cells). Used for the ST-HAE finer-grid spatial-GCN retry (§5). `pandas` reads the
+  `.gz` directly; rebuild the uncompressed CSV with `--zone-scheme zone` (below).
 
 ## Raw data (not tracked — too large for git)
 Excluded from version control (`data/raw/` + `*.parquet` are gitignored). Download and place under

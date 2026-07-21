@@ -10,8 +10,10 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from st_hae import (
-    build_grid, build_adjacency, STHAE, DYN_CHANNELS, _make_windows, _standardizers,
+    build_grid, build_adjacency, STHAE, DYN_CHANNELS, _standardizers,
+    prepare_arrays, gather_batch, build_model, ALL_VARIANTS,
 )
+from st_gnn_baselines import STGCN, GraphWaveNet
 
 
 def _toy_df():
@@ -49,19 +51,46 @@ def test_build_adjacency_is_symmetric_normalized_with_self_loops():
     assert np.all(np.diag(A) > 0)                  # self loops present
 
 
-@pytest.mark.parametrize("flags", [(1, 1, 1), (0, 1, 1), (1, 0, 1), (1, 1, 0)])
-def test_forward_pass_shapes_all_ablations(flags):
+def test_gather_batch_shapes_and_window_alignment():
     g = build_grid(_toy_df())
     mu, sd, fmu, fsd = _standardizers(g, np.ones(g["T"], bool))
-    hist, cal, y, m, y_raw = _make_windows(g, L=6, mu=mu, sd=sd, fmu=fmu, fsd=fsd)
+    arr = prepare_arrays(g, 6, mu, sd, fmu, fsd, "cpu")
+    hist, cal, y, m = gather_batch(arr, np.array([6, 7, 8, 9]), L=6)
+    assert hist.shape == (4, g["N"], 6, len(DYN_CHANNELS))
+    assert cal.shape == (4, 7) and y.shape == (4, g["N"]) and m.shape == (4, g["N"])
+    # window for target t=6 is rows 0..5 of the normalized dyn tensor
+    assert torch.allclose(hist[0].permute(1, 0, 2), arr["dyn"][0:6])
+
+
+@pytest.mark.parametrize("variant", ALL_VARIANTS)
+def test_forward_pass_shapes_all_variants(variant):
+    """Every ST-HAE ablation variant AND both ST-GNN baselines share the forward signature."""
+    g = build_grid(_toy_df())
+    mu, sd, fmu, fsd = _standardizers(g, np.ones(g["T"], bool))
+    L = 12                                              # >= sum of GWN dilations for a valid conv
+    arr = prepare_arrays(g, L, mu, sd, fmu, fsd, "cpu")
+    hist, cal, y, m = gather_batch(arr, np.array([12, 13, 14, 15]), L=L)
     A = torch.tensor(build_adjacency(g["demand"], g["mask"]))
-    model = STHAE(g["N"], len(DYN_CHANNELS), g["cal"].shape[1],
-                  use_spatial=bool(flags[0]), use_temporal=bool(flags[1]),
-                  use_hierarchical=bool(flags[2]))
-    b = torch.arange(4)
-    out = model(hist[b], cal[b], A, torch.arange(g["N"]))
+    model = build_model(variant, g, "cpu")
+    out = model(hist, cal, A, torch.arange(g["N"]))
     assert out.shape == (4, g["N"])
     assert torch.isfinite(out).all()
+
+
+def test_baselines_backward_step_runs():
+    """A single forward+backward step on each ST-GNN baseline (grads flow, no crash)."""
+    g = build_grid(_toy_df())
+    mu, sd, fmu, fsd = _standardizers(g, np.ones(g["T"], bool))
+    L = 12
+    arr = prepare_arrays(g, L, mu, sd, fmu, fsd, "cpu")
+    hist, cal, y, m = gather_batch(arr, np.array([12, 13, 14, 15]), L=L)
+    A = torch.tensor(build_adjacency(g["demand"], g["mask"]))
+    for Model in (STGCN, GraphWaveNet):
+        model = Model(g["N"], len(DYN_CHANNELS), g["cal"].shape[1])
+        out = model(hist, cal, A, torch.arange(g["N"]))
+        loss = ((out - y)[m] ** 2).mean()
+        loss.backward()
+        assert any(p.grad is not None and torch.isfinite(p.grad).all() for p in model.parameters())
 
 
 def test_no_hierarchical_uses_single_expert():

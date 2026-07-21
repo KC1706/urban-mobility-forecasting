@@ -42,6 +42,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 from splits import temporal_split_indices  # noqa: E402
 import robustness_ci as rci  # noqa: E402
+from st_gnn_baselines import STGCN, GraphWaveNet  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -230,90 +231,121 @@ def _standardizers(grid, train_t):
     return mu, sd, fmu.astype(np.float32), fsd.astype(np.float32)
 
 
-def _make_windows(grid, L, mu, sd, fmu, fsd):
-    """Normalized dynamic history windows for every target index t>=L. Returns tensors on CPU."""
-    T, N, C = grid["T"], grid["N"], len(DYN_CHANNELS)
-    dyn = grid["dyn"].copy()
+STHAE_FLAGS = {"full": (1, 1, 1), "no_spatial": (0, 1, 1),
+               "no_temporal": (1, 0, 1), "no_hierarchical": (1, 1, 0)}
+ALL_VARIANTS = list(STHAE_FLAGS) + ["stgcn", "gwn"]
+
+
+def build_model(variant, grid, device):
+    """Model factory. ST-HAE ablation variants + published ST-GNN baselines share the forward
+    signature (hist[B,N,L,C], cal[B,Ccal], A[N,N], zone_ids[N]) -> [B,N], so the identical
+    training/eval harness gives a fair, apples-to-apples comparison on the same masked test cells."""
+    N, c_dyn, c_cal = grid["N"], len(DYN_CHANNELS), grid["cal"].shape[1]
+    if variant in STHAE_FLAGS:
+        s, t, h = STHAE_FLAGS[variant]
+        return STHAE(N, c_dyn, c_cal, use_spatial=bool(s), use_temporal=bool(t),
+                     use_hierarchical=bool(h)).to(device)
+    if variant == "stgcn":
+        return STGCN(N, c_dyn, c_cal).to(device)
+    if variant == "gwn":
+        return GraphWaveNet(N, c_dyn, c_cal).to(device)
+    raise ValueError(f"unknown variant {variant!r}")
+
+
+def prepare_arrays(grid, L, mu, sd, fmu, fsd, device):
+    """Normalized dynamic tensor [T,N,C] + targets/mask/calendar on `device`. History windows are
+    gathered on the fly per batch (see gather_batch) so we never materialize [T-L,N,L,C] — that
+    would be multiple GB at the ~260-zone TLC grid. mu/sd are per-zone; fmu/fsd are per-channel."""
+    dyn = grid["dyn"].astype(np.float32).copy()
     dyn = (dyn - fmu) / fsd
     dyn[:, :, 0] = (grid["demand"] - mu) / sd                    # demand channel per-zone z-score
-    dyn[~grid["mask"]] = 0.0                                     # missing -> mean
-    hist = np.stack([dyn[t - L:t].transpose(1, 0, 2) for t in range(L, T)])  # [T-L,N,L,C]
-    y = ((grid["demand"] - mu) / sd)[L:]                         # normalized target [T-L,N]
-    y_raw = grid["demand"][L:]                                   # raw counts for eval
-    m = grid["mask"][L:]
-    cal = grid["cal"][L:]
-    return (torch.tensor(hist), torch.tensor(cal), torch.tensor(y, dtype=torch.float32),
-            torch.tensor(m), y_raw)
+    dyn[~grid["mask"]] = 0.0                                     # missing -> mean (0 after z-score)
+    y = ((grid["demand"] - mu) / sd).astype(np.float32)
+    return {"dyn": torch.tensor(dyn, device=device),            # [T,N,C]
+            "y": torch.tensor(y, device=device),               # [T,N] normalized target
+            "mask": torch.tensor(grid["mask"], device=device), # [T,N] bool
+            "cal": torch.tensor(grid["cal"], device=device),   # [T,Ccal]
+            "y_raw": grid["demand"].astype(np.float32),        # [T,N] numpy raw counts
+            "mu": mu, "sd": sd}
 
 
-def _masked_rmse_raw(pred_norm, y_raw, mask, mu, sd):
-    p = pred_norm * sd + mu
-    p = np.clip(p, 0, None)
-    e = (p - y_raw)[mask]
-    return float(np.sqrt(np.mean(e ** 2))) if e.size else float("nan")
+def gather_batch(arr, idx, L):
+    """Vectorized window gather. idx: absolute target time indices (each >= L).
+    Returns hist[B,N,L,C], cal[B,Ccal], y[B,N], mask[B,N]."""
+    dev = arr["dyn"].device
+    t = torch.as_tensor(np.asarray(idx), device=dev, dtype=torch.long)
+    win = t.unsqueeze(1) - L + torch.arange(L, device=dev).unsqueeze(0)   # [B,L] = t-L .. t-1
+    hist = arr["dyn"][win].permute(0, 2, 1, 3).contiguous()              # [B,L,N,C]->[B,N,L,C]
+    return hist, arr["cal"][t], arr["y"][t], arr["mask"][t]
 
 
-def train_variant(grid, A, splits, L, variant, device="cpu", epochs=120, patience=18, lr=1e-3):
+def _batches(idx, bs=64, shuffle=True):
+    idx = np.asarray(idx).copy()
+    if shuffle:
+        np.random.shuffle(idx)
+    for k in range(0, len(idx), bs):
+        yield idx[k:k + bs]
+
+
+def _predict(model, arr, A_t, zone_ids, idx, L, bs=128):
+    """Predict normalized demand for target indices `idx` (in order). Returns [len(idx), N]."""
+    model.eval()
+    outs = []
+    with torch.no_grad():
+        for b in _batches(idx, bs, shuffle=False):
+            hist, cal, _, _ = gather_batch(arr, b, L)
+            outs.append(model(hist, cal, A_t, zone_ids).cpu().numpy())
+    return np.concatenate(outs, axis=0)
+
+
+def train_variant(grid, A, splits, L, variant, device="cpu", epochs=120, patience=18, lr=1e-3,
+                  bs=64):
     _seed_everything()
-    flags = {"full": (1, 1, 1), "no_spatial": (0, 1, 1),
-             "no_temporal": (1, 0, 1), "no_hierarchical": (1, 1, 0)}[variant]
     mu, sd, fmu, fsd = _standardizers(grid, splits == "train")
-    hist, cal, y, m, y_raw = _make_windows(grid, L, mu, sd, fmu, fsd)
-    target_split = splits[L:]                                    # split label per target index
-    tr = np.where(target_split == "train")[0]
-    va = np.where(target_split == "val")[0]
-    te = np.where(target_split == "test")[0]
+    arr = prepare_arrays(grid, L, mu, sd, fmu, fsd, device)
+    targets = np.arange(L, grid["T"])
+    tsplit = splits[targets]
+    tr, va, te = (targets[tsplit == s] for s in ("train", "val", "test"))
 
     A_t = torch.tensor(A, device=device)
     zone_ids = torch.arange(grid["N"], device=device)
-    model = STHAE(grid["N"], len(DYN_CHANNELS), grid["cal"].shape[1],
-                  use_spatial=bool(flags[0]), use_temporal=bool(flags[1]),
-                  use_hierarchical=bool(flags[2])).to(device)
+    model = build_model(variant, grid, device)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
-    hist, cal, y, m = hist.to(device), cal.to(device), y.to(device), m.to(device)
 
-    def batches(idx, bs=64, shuffle=True):
-        idx = idx.copy()
-        if shuffle:
-            np.random.shuffle(idx)
-        for k in range(0, len(idx), bs):
-            yield idx[k:k + bs]
+    def val_rmse():
+        vp = np.clip(_predict(model, arr, A_t, zone_ids, va, L) * sd + mu, 0, None)
+        mvE = grid["mask"][va]
+        e = (vp - arr["y_raw"][va])[mvE]
+        return float(np.sqrt(np.mean(e ** 2))) if e.size else float("nan")
 
     best_val, best_state, bad = float("inf"), None, 0
     for ep in range(epochs):
         model.train()
-        for b in batches(tr):
+        for b in _batches(tr, bs):
             opt.zero_grad()
-            pred = model(hist[b], cal[b], A_t, zone_ids)
-            mb = m[b]
-            loss = ((pred - y[b])[mb] ** 2).mean()
+            hist, cal, yb, mb = gather_batch(arr, b, L)
+            pred = model(hist, cal, A_t, zone_ids)
+            loss = ((pred - yb)[mb] ** 2).mean()
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
-        # validation RMSE on raw counts
-        model.eval()
-        with torch.no_grad():
-            vp = torch.cat([model(hist[b], cal[b], A_t, zone_ids) for b in batches(va, shuffle=False)])
-        vrmse = _masked_rmse_raw(vp.cpu().numpy(), y_raw[va], m[va].cpu().numpy(), mu, sd)
+        vrmse = val_rmse()
         if vrmse < best_val - 1e-4:
-            best_val, best_state, bad = vrmse, {k: v.detach().cpu().clone()
-                                                for k, v in model.state_dict().items()}, 0
+            best_val = vrmse
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            bad = 0
         else:
             bad += 1
             if bad >= patience:
                 break
     model.load_state_dict(best_state)
-    model.eval()
-    with torch.no_grad():
-        tp = torch.cat([model(hist[b], cal[b], A_t, zone_ids) for b in batches(te, shuffle=False)])
-    pred_te = np.clip(tp.cpu().numpy() * sd + mu, 0, None)
+    pred_te = np.clip(_predict(model, arr, A_t, zone_ids, te, L) * sd + mu, 0, None)  # [len_te,N]
 
-    # Flatten observed test cells -> paired arrays for metrics/robustness.
-    mte = m[te].cpu().numpy()
-    yt = y_raw[te][mte]
+    # Flatten observed test cells -> paired arrays for metrics/robustness (matches RF's cells).
+    mte = grid["mask"][te]
+    yt = arr["y_raw"][te][mte]
     yp = pred_te[mte]
-    hours = grid["times"][L:][te].hour.to_numpy()
-    hours = np.repeat(hours[:, None], grid["N"], axis=1)[mte]
+    hours = np.repeat(grid["times"][te].hour.to_numpy()[:, None], grid["N"], axis=1)[mte]
     zj = np.repeat(np.arange(grid["N"])[None, :], len(te), axis=0)[mte]
     zones = np.array(grid["zones"])[zj]
     return {"y_true": yt, "y_pred": yp, "hours": hours, "zones": zones,
@@ -336,7 +368,9 @@ def robustness_summary(y_true, y_pred, hours, zones, B=2000):
             "high_demand_degradation_ci": ci(high), "per_zone_r2_ci": per_zone}
 
 
-def run(data_path, out=None, ablation=False, L=24, device="auto", B=2000):
+def run(data_path, out=None, variants=None, L=24, device="auto", B=2000):
+    if variants is None:
+        variants = ["full"]
     _seed_everything()
     device = resolve_device(device)
     logger.info(f"Device: {device}")
@@ -347,10 +381,9 @@ def run(data_path, out=None, ablation=False, L=24, device="auto", B=2000):
     logger.info(f"Grid: T={grid['T']} x N={grid['N']} zones ({', '.join(map(str, grid['zones']))}); "
                 f"lookback L={L}; adjacency edges={int((A > 0).sum() - grid['N'])}")
 
-    variants = ["full"] + (["no_spatial", "no_temporal", "no_hierarchical"] if ablation else [])
     results = {}
     for v in variants:
-        logger.info(f"\n=== Training ST-HAE [{v}] ===")
+        logger.info(f"\n=== Training [{v}] ===")
         r = train_variant(grid, A, splits, L, v, device=device)
         summ = robustness_summary(r["y_true"], r["y_pred"], r["hours"], r["zones"], B=B)
         summ.update({"n_params": r["n_params"], "epochs_trained": r["epochs_trained"]})
@@ -364,7 +397,7 @@ def run(data_path, out=None, ablation=False, L=24, device="auto", B=2000):
     # RandomForest baseline on the identical split/test cells (from robustness_ci).
     logger.info("\n=== RandomForest baseline (same split) ===")
     rf = rci.run_analysis(data_path, B=B)
-    out_obj = {"data": str(data_path), "lookback_L": L,
+    out_obj = {"data": str(data_path), "lookback_L": L, "device": device,
                "random_forest": {"overall": rf["overall"],
                                  "temporal_ratio_ci": [rf["temporal_ratio_ci"]["point"],
                                                        rf["temporal_ratio_ci"]["lo"],
@@ -372,7 +405,7 @@ def run(data_path, out=None, ablation=False, L=24, device="auto", B=2000):
                                  "high_demand_degradation_ci": [rf["high_demand_degradation_ci"]["point"],
                                                                 rf["high_demand_degradation_ci"]["lo"],
                                                                 rf["high_demand_degradation_ci"]["hi"]]},
-               "st_hae": results}
+               "models": results}
     _print_table(out_obj)
     if out:
         Path(out).parent.mkdir(parents=True, exist_ok=True)
@@ -383,15 +416,15 @@ def run(data_path, out=None, ablation=False, L=24, device="auto", B=2000):
 
 def _print_table(o):
     print("\n" + "=" * 78)
-    print(f"ST-HAE vs BASELINE  ({Path(o['data']).name}, leakage-free test)")
+    print(f"MODELS vs BASELINE  ({Path(o['data']).name}, leakage-free test)")
     print("=" * 78)
-    print(f"{'Model':20s} {'RMSE':>8s} {'R²':>8s} {'MAE':>8s} {'temporal':>10s} {'high-dmd':>10s}")
+    print(f"{'Model':22s} {'RMSE':>8s} {'R²':>8s} {'MAE':>8s} {'temporal':>10s} {'high-dmd':>10s}")
     rf = o["random_forest"]
-    print(f"{'RandomForest':20s} {rf['overall']['rmse']:8.2f} {rf['overall']['r2']:8.4f} "
+    print(f"{'RandomForest':22s} {rf['overall']['rmse']:8.2f} {rf['overall']['r2']:8.4f} "
           f"{'—':>8s} {rf['temporal_ratio_ci'][0]:9.1f}x {rf['high_demand_degradation_ci'][0]:9.0f}%")
-    for v, s in o["st_hae"].items():
+    for v, s in o["models"].items():
         ov = s["overall"]
-        print(f"{'ST-HAE:' + v:20s} {ov['rmse']:8.2f} {ov['r2']:8.4f} {ov['mae']:8.2f} "
+        print(f"{v:22s} {ov['rmse']:8.2f} {ov['r2']:8.4f} {ov['mae']:8.2f} "
               f"{s['temporal_ratio_ci'][0]:9.1f}x {s['high_demand_degradation_ci'][0]:9.0f}%")
     print("=" * 78)
 
@@ -400,14 +433,26 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", required=True)
     ap.add_argument("--out", default=None)
-    ap.add_argument("--ablation", action="store_true", help="also train no_spatial/temporal/hierarchical")
+    ap.add_argument("--ablation", action="store_true",
+                    help="ST-HAE leave-one-out: full + no_spatial/no_temporal/no_hierarchical")
+    ap.add_argument("--baselines", action="store_true", help="also train STGCN + Graph WaveNet")
+    ap.add_argument("--variants", default=None,
+                    help="comma list overriding --ablation/--baselines "
+                         f"(any of: {','.join(ALL_VARIANTS)})")
     ap.add_argument("--lookback", type=int, default=24)
     ap.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda", "mps"],
                     help="'auto' picks cuda>mps>cpu (use 'cuda' on Kaggle GPU)")
     ap.add_argument("--B", type=int, default=2000)
     args = ap.parse_args()
-    run(args.data, out=args.out, ablation=args.ablation, L=args.lookback,
-        device=args.device, B=args.B)
+    if args.variants:
+        variants = [v.strip() for v in args.variants.split(",") if v.strip()]
+    else:
+        variants = ["full"]
+        if args.ablation:
+            variants += ["no_spatial", "no_temporal", "no_hierarchical"]
+        if args.baselines:
+            variants += ["stgcn", "gwn"]
+    run(args.data, out=args.out, variants=variants, L=args.lookback, device=args.device, B=args.B)
 
 
 if __name__ == "__main__":
