@@ -117,10 +117,11 @@ weekly reset or CPU.
   both cities. (E-019, §6)
 - ✅ Faithfulness metric (directional accuracy + top-driver recall + 1−hallucination + Spearman)
   and `mock` provider for CI. `src/llm_faithfulness.py`, tests green.
-- 🔲 **Real provider ablation (GPT-4/Claude/Mistral) — blocked on credentials:** OpenAI key out of
-  billing quota, Anthropic key is a placeholder, HF token lacks inference scope. One command runs it
-  with a funded key. (E-019)
-- **Track B:** ✅ §6 written (protocol + ground-truth driver table + honest provider status).
+- ✅ **Real provider result via Groq (free):** Llama-3.3-70B faithfulness **0.82±0.10 (Chicago),
+  0.67±0.00 (NYC)** over 5 runs — reliable on scale drivers, wrong on counter-intuitive ones,
+  hallucinates peak_hour on NYC. `--repeats` added (LLM noisy at temp 0). (E-020)
+- 🔲 Optional: extend the ablation with funded closed-model keys (OpenAI/Anthropic) for an
+  open-vs-closed table. **Track B:** ✅ §6 written (protocol + ground-truth + real Llama result).
 
 ## Phase 5 — Synthesis & Release (Weeks 10–12)
 - One-command reproducible run producing every paper number.

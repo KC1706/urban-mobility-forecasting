@@ -26,9 +26,10 @@ together with a controlled negative result — the spatial graph convolution *ov
 at *every* granularity tested, and is dropped — and (3) an **LLM explainability layer with a
 quantified faithfulness metric**: rather than emitting unchecked free text, we score an LLM's
 explanation of the model's failures against the *ground-truth* per-factor error attribution
-(directional accuracy, top-driver recall, hallucination rate). The framework and the city-specific
-ground-truth driver profiles are complete; the multi-provider ablation (GPT-4 / Claude / Mistral)
-runs by one command once funded API credentials are supplied.
+(directional accuracy, top-driver recall, hallucination rate). A strong open model (Llama-3.3-70B)
+scores only **0.67–0.82 faithful over 5 runs** — reliable on the intuitive scale drivers but
+systematically wrong on the counter-intuitive ones and prone to plausible-but-false driver
+hallucinations — a gap invisible to free-text evaluation.
 
 ---
 
@@ -239,7 +240,7 @@ attention + MoE — remains best or tied everywhere, and is what we report. (`re
 **Baselines:** RF / XGBoost / LightGBM / LSTM (Phase 0–1) + **STGCN, Graph WaveNet** (§5.1,
 `src/st_gnn_baselines.py`). ✅
 
-## 6. LLM Explainability with a Quantified Faithfulness Eval  ✍️ (Phase 4 — framework + ground truth done; provider run pending credentials)
+## 6. LLM Explainability with a Quantified Faithfulness Eval  ✅ (Phase 4 — framework + ground truth + real Llama-3.3-70B result)
 
 Prior "LLM-for-explanation" work emits free text that is never checked against reality. We instead
 **score whether an LLM's explanation of the forecaster's failures agrees with the ground-truth error
@@ -273,14 +274,33 @@ Ranked drivers — Chicago: `high_demand > high_volume_zone > low_volume_zone > 
 significant independent driver once demand is accounted for — a plausible-sounding but wrong
 explanation the faithfulness score would penalize.)
 
-**Provider ablation — ready, pending working credentials.** The framework runs **Groq** (free,
-OpenAI-compatible, frontier *open* models e.g. Llama-3.3-70B) / OpenAI / Anthropic / HuggingFace, plus
-a deterministic `mock` provider used for CI (the mock scores faithfulness 0.82 on Chicago / 0.76 on
-NYC, confirming the scorer end-to-end). Real-provider numbers are **not yet obtained**: the available
-OpenAI key is out of billing quota (HTTP 429), the Anthropic key is a placeholder, and the
-HuggingFace token lacks inference permission (HTTP 403). One command produces the table once any key
-is set (a **free Groq key** suffices): `python src/llm_faithfulness.py --data <csv> --providers groq,openai,anthropic`.
-🔲 (real-provider faithfulness scores + open/closed-model comparison)
+**Real-provider result — Groq / Llama-3.3-70B.** Because LLM output varies run-to-run even at
+temperature 0, we report faithfulness as **mean ± std over 5 runs** (`--repeats 5`):
+
+| City | Faithfulness | Directional acc. | Top-3 recall | Hallucination |
+|---|---|---|---|---|
+| Chicago | **0.82 ± 0.10** | 0.65 | 0.80 | 0.00 |
+| NYC | **0.67 ± 0.00** | 0.60 | 0.67 | 0.25 |
+
+**What the metric exposes (the point of the whole exercise).** A strong 70B model's failure
+explanations are only **~0.7–0.8 faithful**, and the errors are systematic:
+- *It reliably gets the scale-driven drivers* — high-demand and high-volume-zone **increase** error —
+  which match the intuitive "more activity → more error" prior.
+- *It systematically misses/flips the counter-intuitive drivers* — that low-volume zones and night
+  hours have **lower absolute error** (small counts ⇒ small errors). On Chicago it *reversed* the
+  night effect; on both cities it missed the low-volume-zone effect.
+- *It hallucinates a plausible-but-false driver* — on NYC it claimed `peak_hour` affects error
+  (hallucination rate 0.25), exactly the trap: peak hours *feel* error-prone but are not significant
+  once demand is controlled.
+- *Explanations are noisy* — Chicago faithfulness varies ±0.10 across identical-prompt runs, so
+  single-shot LLM explanations are unreliable; averaging is necessary.
+
+This validates the thesis: free-text LLM failure-explanations read as authoritative yet are only
+partially faithful, and that gap is invisible without a quantitative check. Framework also supports
+OpenAI / Anthropic / HuggingFace + a deterministic `mock` (CI). *(OpenAI key here is out of quota,
+Anthropic key a placeholder, HF token unscoped — so the reported real numbers are Groq's; adding a
+funded closed-model key extends the table via `--providers groq,openai,anthropic`.)* Repro:
+`python src/llm_faithfulness.py --data <csv> --providers groq --repeats 5`.
 
 ## 7. Experiments and Results  ✍️ (leakage-free; Chicago 32 d + NYC 6 mo, CIs — Phase 1/2)
 

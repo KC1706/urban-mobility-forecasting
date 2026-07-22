@@ -2,6 +2,7 @@
   "data": "data/processed/nyc_taxi_boroughs.csv",
   "n_test": 3416,
   "n_sample": 40,
+  "repeats": 5,
   "ground_truth": {
     "factors": {
       "high_demand": {
@@ -75,49 +76,215 @@
   },
   "providers": {
     "mock": {
-      "directional_accuracy": 0.8,
-      "top3_driver_recall": 0.667,
-      "hallucination_rate": 0.2,
-      "rank_spearman": -0.4,
-      "faithfulness": 0.756,
-      "n_true_significant": 5,
-      "true_direction_hits": [
-        "high_demand",
-        "night",
-        "high_volume_zone",
-        "low_volume_zone"
-      ],
-      "hallucinated": [
-        "peak_hour"
-      ],
       "available": true,
-      "model": null,
-      "claims": {
-        "factors": {
-          "high_demand": "increases",
-          "peak_hour": "increases",
-          "night": "decreases",
-          "weekend": "none",
-          "high_volume_zone": "increases",
-          "low_volume_zone": "decreases"
+      "model": "mock",
+      "n_runs": 1,
+      "faithfulness_mean": 0.756,
+      "faithfulness_std": 0.0,
+      "directional_accuracy_mean": 0.8,
+      "top3_driver_recall_mean": 0.667,
+      "hallucination_rate_mean": 0.2,
+      "runs": [
+        {
+          "directional_accuracy": 0.8,
+          "top3_driver_recall": 0.667,
+          "hallucination_rate": 0.2,
+          "rank_spearman": -0.4,
+          "faithfulness": 0.756,
+          "n_true_significant": 5,
+          "true_direction_hits": [
+            "high_demand",
+            "night",
+            "high_volume_zone",
+            "low_volume_zone"
+          ],
+          "hallucinated": [
+            "peak_hour"
+          ],
+          "claims": {
+            "factors": {
+              "high_demand": "increases",
+              "peak_hour": "increases",
+              "night": "decreases",
+              "weekend": "none",
+              "high_volume_zone": "increases",
+              "low_volume_zone": "decreases"
+            },
+            "ranked_drivers": [
+              "high_demand",
+              "high_volume_zone",
+              "peak_hour"
+            ]
+          }
+        }
+      ]
+    },
+    "groq": {
+      "available": true,
+      "model": "llama-3.3-70b-versatile",
+      "n_runs": 5,
+      "faithfulness_mean": 0.672,
+      "faithfulness_std": 0.0,
+      "directional_accuracy_mean": 0.6,
+      "top3_driver_recall_mean": 0.667,
+      "hallucination_rate_mean": 0.25,
+      "runs": [
+        {
+          "directional_accuracy": 0.6,
+          "top3_driver_recall": 0.667,
+          "hallucination_rate": 0.25,
+          "rank_spearman": -0.2,
+          "faithfulness": 0.672,
+          "n_true_significant": 5,
+          "true_direction_hits": [
+            "high_demand",
+            "weekend",
+            "high_volume_zone"
+          ],
+          "hallucinated": [
+            "peak_hour"
+          ],
+          "claims": {
+            "factors": {
+              "high_demand": "increases",
+              "peak_hour": "decreases",
+              "night": "none",
+              "weekend": "increases",
+              "high_volume_zone": "increases",
+              "low_volume_zone": "none"
+            },
+            "ranked_drivers": [
+              "high_volume_zone",
+              "high_demand",
+              "weekend"
+            ]
+          }
         },
-        "ranked_drivers": [
-          "high_demand",
-          "high_volume_zone",
-          "peak_hour"
-        ]
-      }
-    },
-    "openai": {
-      "available": true,
-      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/doc"
-    },
-    "anthropic": {
-      "available": false
-    },
-    "huggingface": {
-      "available": true,
-      "error": "HfHubHTTPError: (Request ID: Root=1-6a60a55d-5bd282ba11dea75721fc93c3;c3ae9db6-7f2c-4757-9bd5-066ad4401799)\n\n403 Forbidden: This authentication method does not have sufficient permissions to call Inference Providers "
+        {
+          "directional_accuracy": 0.6,
+          "top3_driver_recall": 0.667,
+          "hallucination_rate": 0.25,
+          "rank_spearman": -0.2,
+          "faithfulness": 0.672,
+          "n_true_significant": 5,
+          "true_direction_hits": [
+            "high_demand",
+            "weekend",
+            "high_volume_zone"
+          ],
+          "hallucinated": [
+            "peak_hour"
+          ],
+          "claims": {
+            "factors": {
+              "high_demand": "increases",
+              "peak_hour": "decreases",
+              "night": "none",
+              "weekend": "increases",
+              "high_volume_zone": "increases",
+              "low_volume_zone": "none"
+            },
+            "ranked_drivers": [
+              "high_volume_zone",
+              "high_demand",
+              "weekend"
+            ]
+          }
+        },
+        {
+          "directional_accuracy": 0.6,
+          "top3_driver_recall": 0.667,
+          "hallucination_rate": 0.25,
+          "rank_spearman": -0.2,
+          "faithfulness": 0.672,
+          "n_true_significant": 5,
+          "true_direction_hits": [
+            "high_demand",
+            "weekend",
+            "high_volume_zone"
+          ],
+          "hallucinated": [
+            "peak_hour"
+          ],
+          "claims": {
+            "factors": {
+              "high_demand": "increases",
+              "peak_hour": "decreases",
+              "night": "none",
+              "weekend": "increases",
+              "high_volume_zone": "increases",
+              "low_volume_zone": "none"
+            },
+            "ranked_drivers": [
+              "high_volume_zone",
+              "high_demand",
+              "weekend"
+            ]
+          }
+        },
+        {
+          "directional_accuracy": 0.6,
+          "top3_driver_recall": 0.667,
+          "hallucination_rate": 0.25,
+          "rank_spearman": -0.2,
+          "faithfulness": 0.672,
+          "n_true_significant": 5,
+          "true_direction_hits": [
+            "high_demand",
+            "weekend",
+            "high_volume_zone"
+          ],
+          "hallucinated": [
+            "peak_hour"
+          ],
+          "claims": {
+            "factors": {
+              "high_demand": "increases",
+              "peak_hour": "decreases",
+              "night": "none",
+              "weekend": "increases",
+              "high_volume_zone": "increases",
+              "low_volume_zone": "none"
+            },
+            "ranked_drivers": [
+              "high_volume_zone",
+              "high_demand",
+              "weekend"
+            ]
+          }
+        },
+        {
+          "directional_accuracy": 0.6,
+          "top3_driver_recall": 0.667,
+          "hallucination_rate": 0.25,
+          "rank_spearman": -0.2,
+          "faithfulness": 0.672,
+          "n_true_significant": 5,
+          "true_direction_hits": [
+            "high_demand",
+            "weekend",
+            "high_volume_zone"
+          ],
+          "hallucinated": [
+            "peak_hour"
+          ],
+          "claims": {
+            "factors": {
+              "high_demand": "increases",
+              "peak_hour": "decreases",
+              "night": "none",
+              "weekend": "increases",
+              "high_volume_zone": "increases",
+              "low_volume_zone": "none"
+            },
+            "ranked_drivers": [
+              "high_volume_zone",
+              "high_demand",
+              "weekend"
+            ]
+          }
+        }
+      ]
     }
   }
 }

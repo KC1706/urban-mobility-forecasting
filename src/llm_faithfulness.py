@@ -251,13 +251,18 @@ def _r(x):
 # --------------------------------------------------------------------------------------
 # 5. Run (provider ablation)
 # --------------------------------------------------------------------------------------
+DEFAULT_MODELS = {"openai": "gpt-4o-mini", "groq": "llama-3.3-70b-versatile",
+                  "anthropic": "claude-sonnet-5", "huggingface": "mistralai/Mistral-7B-Instruct-v0.3",
+                  "mock": "mock"}
+
+
 def _key_present(provider):
     envk = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY",
             "huggingface": "HUGGINGFACE_API_KEY", "groq": "GROQ_API_KEY"}.get(provider)
     return provider == "mock" or (envk and len(os.environ.get(envk, "")) >= 30)
 
 
-def run(data_path, providers=("mock",), n_sample=40, out=None, models=None):
+def run(data_path, providers=("mock",), n_sample=40, out=None, models=None, repeats=1):
     df = build_error_dataset(data_path)
     truth = ground_truth_attribution(df)
     logger.info(f"Ground-truth error drivers (ranked): {truth['ranked_drivers']}")
@@ -269,27 +274,40 @@ def run(data_path, providers=("mock",), n_sample=40, out=None, models=None):
 
     results = {}
     for p in providers:
-        model = (models or {}).get(p)
+        model = (models or {}).get(p) or DEFAULT_MODELS.get(p)
         if not _key_present(p):
             logger.info(f"\n[{p}] skipped — no API key in env")
             results[p] = {"available": False}
             continue
-        try:
-            raw = call_llm(p, prompt, model=model)
-            claims = parse_llm_json(raw)
-            score = score_faithfulness(claims, truth)
-            score.update({"available": True, "model": model, "claims": claims})
-            results[p] = score
-            logger.info(f"\n[{p}] faithfulness={score['faithfulness']} "
-                        f"(dir_acc={score['directional_accuracy']}, "
-                        f"recall={score['top3_driver_recall']}, "
-                        f"halluc={score['hallucination_rate']})")
-        except Exception as e:                        # noqa: BLE001
-            logger.info(f"\n[{p}] error: {type(e).__name__}: {str(e)[:120]}")
-            results[p] = {"available": True, "error": f"{type(e).__name__}: {str(e)[:200]}"}
+        # LLM output varies run-to-run even at temperature 0, so average over `repeats`.
+        reps = 1 if p == "mock" else repeats
+        runs = []
+        for _ in range(reps):
+            try:
+                claims = parse_llm_json(call_llm(p, prompt, model=model))
+                runs.append(score_faithfulness(claims, truth) | {"claims": claims})
+            except Exception as e:                    # noqa: BLE001
+                logger.info(f"\n[{p}] error: {type(e).__name__}: {str(e)[:120]}")
+                runs.append({"error": f"{type(e).__name__}: {str(e)[:200]}"})
+        ok = [r for r in runs if "faithfulness" in r and r["faithfulness"] is not None]
+        if not ok:
+            results[p] = {"available": True, "model": model, "runs": runs}
+            continue
+        faiths = np.array([r["faithfulness"] for r in ok], float)
+        agg = {"available": True, "model": model, "n_runs": len(ok),
+               "faithfulness_mean": _r(faiths.mean()),
+               "faithfulness_std": _r(faiths.std(ddof=1) if len(faiths) > 1 else 0.0),
+               "directional_accuracy_mean": _r(np.nanmean([r["directional_accuracy"] for r in ok])),
+               "top3_driver_recall_mean": _r(np.nanmean([r["top3_driver_recall"] for r in ok])),
+               "hallucination_rate_mean": _r(np.nanmean([r["hallucination_rate"] for r in ok])),
+               "runs": runs}
+        results[p] = agg
+        logger.info(f"\n[{p}] faithfulness={agg['faithfulness_mean']}±{agg['faithfulness_std']} "
+                    f"over {len(ok)} runs (dir_acc={agg['directional_accuracy_mean']}, "
+                    f"recall={agg['top3_driver_recall_mean']}, halluc={agg['hallucination_rate_mean']})")
 
     out_obj = {"data": str(data_path), "n_test": int(len(df)), "n_sample": n_sample,
-               "ground_truth": truth, "providers": results}
+               "repeats": repeats, "ground_truth": truth, "providers": results}
     if out:
         Path(out).parent.mkdir(parents=True, exist_ok=True)
         json.dump(out_obj, open(out, "w"), indent=2, default=float)
@@ -304,10 +322,12 @@ def main():
                     help="comma list: mock,groq,openai,anthropic,huggingface "
                          "(groq = free, OpenAI-compatible, open models like llama-3.3-70b)")
     ap.add_argument("--n-sample", type=int, default=40)
+    ap.add_argument("--repeats", type=int, default=1,
+                    help="repeat each real provider N times for faithfulness mean±std (LLMs are noisy)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     run(args.data, providers=[p.strip() for p in args.providers.split(",") if p.strip()],
-        n_sample=args.n_sample, out=args.out)
+        n_sample=args.n_sample, out=args.out, repeats=args.repeats)
 
 
 if __name__ == "__main__":

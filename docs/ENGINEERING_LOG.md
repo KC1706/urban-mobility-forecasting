@@ -245,7 +245,29 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   suite 47 passed.
 
 
-## Phase 4 — LLM Explainability, Evaluated  ✍️ (framework + ground truth done; provider run blocked on credentials)
+## Phase 4 — LLM Explainability, Evaluated  ✅ (framework + ground truth + real Llama-3.3-70B via Groq)
+
+### E-020 · 2026-07-23 · [P4] Real faithfulness result via Groq (free): Llama-3.3-70B is only 0.67–0.82 faithful
+- **Unblocked with Groq** (user supplied a free Groq key). Groq is OpenAI-API-compatible → added a
+  `groq` provider (OpenAI SDK + `base_url=api.groq.com/openai/v1`, `llama-3.3-70b-versatile`).
+- **Result (mean±std over 5 runs — added `--repeats` because LLM output is noisy even at temp 0):**
+  Chicago **0.82±0.10**, NYC **0.67±0.00**. `results/faithfulness_{chicago,nyc}.json`.
+- **What the metric caught (the whole point):**
+  - LLM reliably gets the **scale-driven** drivers (high_demand↑, high_volume_zone↑ increase error) —
+    the intuitive "more activity → more error" prior.
+  - It **misses/flips the counter-intuitive** ones: low_volume_zone and night have *lower* abs error
+    (small counts) — on Chicago it reversed night; on both it missed low_volume_zone.
+  - It **hallucinates** a peak_hour effect on NYC (halluc 0.25) — peak hours *feel* error-prone but
+    aren't significant once demand is controlled (the designed trap).
+  - Explanations are **noisy**: Chicago faithfulness varies ±0.10 across identical prompts → single-shot
+    LLM explanations are unreliable; must average.
+- **Nondeterminism note:** first two single-run groq calls gave 0.72 then 0.92 on Chicago (temp 0),
+  which is exactly why I added multi-run mean±std. NYC was stable (±0.0).
+- **Security:** key was used from env only, never committed; verified no `gsk_` in any results JSON.
+  (Flagged to user: rotate the key since it was shared in chat.)
+- **Learning:** a free OpenAI-compatible provider (Groq) turned "pending credentials" into a real,
+  defensible result in minutes — and multi-run averaging (same discipline as ST-HAE multi-seed) was
+  essential because the LLM isn't deterministic. [[E-019]]
 
 ### E-019 · 2026-07-22 · [P4] Quantified faithfulness framework built + ground truth; real-provider run blocked (no funded keys)
 - **What:** `src/llm_faithfulness.py` (+`tests/test_llm_faithfulness.py`, 5 green) — turns "LLM
