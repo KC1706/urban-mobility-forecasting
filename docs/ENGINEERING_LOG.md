@@ -439,8 +439,18 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   leaky story for the entire project; a mechanical "every number must trace to a committed JSON"
   check is the cheapest guard against shipping a contradiction.
 
+### E-022 · 2026-07-23 · [P5] Paper prose complete (Abstract, Intro, Related Work, Discussion, Conclusion, refs)
+- Wrote full academic prose for every section that was still bullets: §1 Introduction (problem →
+  false-comfort thesis → two-city evidence → ST-HAE/ablation → faithfulness → contributions), §2
+  Related Work (demand forecasting, ST-GNNs, robustness/conformal, LLM-faithfulness — with a BibTeX
+  bibliography of 8 keys cited inline), §8 Discussion & Limitations (governance framing, conditional
+  calibration, honest-ablation stance, limitations), §9 Conclusion. Abstract/§3/§4/§7 marked ✅.
+- Every quantitative claim in the prose traces to a committed results JSON (numbers reused from the
+  consistency-checked tables). PAPER.md is now a results-complete, prose-complete manuscript.
+
 ### Remaining Phase 5
-- LaTeX assembly into the venue template; final prose polish. 🔲
+- LaTeX assembly into the venue template (KDD/ACM `acmart` or IJCAI style) — pending venue choice;
+  best compiled on Overleaf (no local TeX toolchain). 🔲
 
 
 ## Phase 4 — LLM Explainability, Evaluated  ✅ (see entries above — E-019/E-020)
