@@ -245,6 +245,30 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   suite 47 passed.
 
 
+## Phase 4 — LLM Explainability, Evaluated  ✍️ (framework + ground truth done; provider run blocked on credentials)
+
+### E-019 · 2026-07-22 · [P4] Quantified faithfulness framework built + ground truth; real-provider run blocked (no funded keys)
+- **What:** `src/llm_faithfulness.py` (+`tests/test_llm_faithfulness.py`, 5 green) — turns "LLM
+  explanation quality" into a number. Ground-truth error attribution (Mann-Whitney signed effect of
+  each interpretable factor on the RF's abs-error) → LLM elicited to infer drivers from a sample of
+  test cells (strict JSON) → faithfulness = mean(directional accuracy on sig factors, top-3 driver
+  recall, 1−hallucination rate) + Spearman rank agreement. Deterministic `mock` provider makes the
+  whole thing testable/CI-able with no API.
+- **Real ground truth (genuine result):** Chicago drivers `high_demand(9.6×) > high_volume_zone(9.2×)
+  > low_volume_zone(0.11×) > night(0.52×)`; NYC `low_volume_zone(0.03×) > high_volume_zone(23.4×) >
+  high_demand(9.3×) > night > weekend`. `peak_hour` is NOT a significant independent driver once
+  demand is controlled — a nice trap for plausible-but-wrong explanations. `results/faithfulness_{chicago,nyc}.json`.
+- **Blocker (documented honestly, not faked):** none of the three providers can call right now —
+  OpenAI key valid but **out of billing quota (429)**; Anthropic key is a 20-char **placeholder**;
+  HuggingFace token **lacks inference permission (403)**. The mock scores 0.82/0.76 (scorer sanity),
+  but NO real-LLM numbers were produced. Paper §6 states this and gives the one-command path.
+- **Env fixes:** upgraded `openai` 1.3.5→2.46 (old SDK crashed on httpx `proxies`), `huggingface_hub`
+  →1.24 (old endpoint `api-inference.huggingface.co` is dead / unresolved; new `router.huggingface.co`
+  works). Keys read from env only; verified **no secrets in the committed JSONs**.
+- **Learning:** the faithfulness *framework* + the ground-truth attribution ARE the contribution and
+  don't need an LLM to be valid; the provider ablation is a one-command add-on. Refused to invent
+  LLM scores — a fabricated table would be worse than an honest "pending credentials".
+
 ## Phase 3 — ST-HAE: The Real Model  ✅ (trained; ablation + ST-GNN baselines across 3 grids, on Kaggle GPU)
 
 ### E-018 · 2026-07-22 · [P3] Spatial rescue (learned/geographic adjacency) + 5-seed variance: graph was suboptimal but spatial still doesn't win

@@ -113,9 +113,14 @@ rescue + multi-seed). Note: Kaggle weekly GPU quota (30 h) is spent — further 
 weekly reset or CPU.
 
 ## Phase 4 — LLM Explainability, Evaluated (Weeks 8–9)
-- Ground-truth failure attribution (per-zone/per-hour causes).
-- Agreement metric: do LLM explanations match ground truth? Provider ablation (GPT-4/Claude/Mistral).
-- **Track B:** Explainability section with faithfulness metric.
+- ✅ Ground-truth failure attribution (signed per-factor effect on abs-error + significance),
+  both cities. (E-019, §6)
+- ✅ Faithfulness metric (directional accuracy + top-driver recall + 1−hallucination + Spearman)
+  and `mock` provider for CI. `src/llm_faithfulness.py`, tests green.
+- 🔲 **Real provider ablation (GPT-4/Claude/Mistral) — blocked on credentials:** OpenAI key out of
+  billing quota, Anthropic key is a placeholder, HF token lacks inference scope. One command runs it
+  with a funded key. (E-019)
+- **Track B:** ✅ §6 written (protocol + ground-truth driver table + honest provider status).
 
 ## Phase 5 — Synthesis & Release (Weeks 10–12)
 - One-command reproducible run producing every paper number.

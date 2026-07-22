@@ -21,8 +21,8 @@ torch==2.1.0
 #   torch-geometric
 
 # LLM integration (Phase 3: explainability)
-openai==1.3.5
-anthropic==0.7.1
+openai>=2.0
+anthropic>=0.40
 transformers==4.35.0
 
 # Visualization
@@ -44,3 +44,5 @@ nbconvert==7.9.2
 #   pip install cudf-cu11 cuml-cu11 cugraph-cu11 dask-cudf-cu11 datashader holoviews
 # ---------------------------------------------------------------------------
 pyarrow==25.0.0
+huggingface_hub>=0.24
+scipy>=1.11

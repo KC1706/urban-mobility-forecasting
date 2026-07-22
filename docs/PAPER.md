@@ -23,9 +23,12 @@ leave-one-pillar-out ablation* over three grids (two cities, coarse and 260-zone
 **temporal-attention + mixture-of-experts** core that **beats RandomForest, XGBoost, STGCN, and
 Graph WaveNet on all three** and **halves the temporal error swing** (to 3.8–6× from 14–18×),
 together with a controlled negative result — the spatial graph convolution *over-smooths* and hurts
-at *every* granularity tested, and is dropped — and (3) an **LLM explainability layer** whose
-failure explanations we quantitatively validate against ground-truth error attribution.
-[LLM numbers to be finalized after Phase 4.]
+at *every* granularity tested, and is dropped — and (3) an **LLM explainability layer with a
+quantified faithfulness metric**: rather than emitting unchecked free text, we score an LLM's
+explanation of the model's failures against the *ground-truth* per-factor error attribution
+(directional accuracy, top-driver recall, hallucination rate). The framework and the city-specific
+ground-truth driver profiles are complete; the multi-provider ablation (GPT-4 / Claude / Mistral)
+runs by one command once funded API credentials are supplied.
 
 ---
 
@@ -236,10 +239,47 @@ attention + MoE — remains best or tied everywhere, and is what we report. (`re
 **Baselines:** RF / XGBoost / LightGBM / LSTM (Phase 0–1) + **STGCN, Graph WaveNet** (§5.1,
 `src/st_gnn_baselines.py`). ✅
 
-## 6. LLM Explainability  🔲 (Phase 4)
-- Post-prediction natural-language explanation of failures.
-- **Faithfulness eval:** agreement between generated explanations and ground-truth per-zone /
-  per-hour error attribution; provider ablation (GPT-4 / Claude / Mistral).
+## 6. LLM Explainability with a Quantified Faithfulness Eval  ✍️ (Phase 4 — framework + ground truth done; provider run pending credentials)
+
+Prior "LLM-for-explanation" work emits free text that is never checked against reality. We instead
+**score whether an LLM's explanation of the forecaster's failures agrees with the ground-truth error
+attribution** (`src/llm_faithfulness.py`).
+
+**Protocol.**
+1. **Ground truth.** On the leakage-free held-out test set, quantify how much each interpretable
+   factor (high-demand, peak-hour, night, weekend, high/low-volume zone) really drives the RF model's
+   absolute error: signed group-mean ratio + significance (Mann-Whitney, α=0.05).
+2. **Elicitation.** Show the LLM a *sample* of test cells (zone, hour, weekend, actual, prediction,
+   error) — **not** the answer — and ask it to infer, per factor, whether the factor increases /
+   decreases / doesn't affect error, and to rank the top drivers, as strict JSON.
+3. **Faithfulness score** ∈ [0,1] = mean of directional accuracy on truly-significant factors, top-3
+   driver recall, and (1 − hallucination rate); plus Spearman rank agreement. This turns
+   "explanation quality" into a number, gradeable per provider.
+
+**Ground-truth error-driver profiles (real, this is the gradeable target).** The two cities have
+*different* true drivers — so a faithful explanation must be city-specific, not boilerplate:
+
+| Factor | Chicago effect (abs-err ratio) | NYC effect |
+|---|---|---|
+| high_demand | **↑ 9.6×** (sig) | ↑ 9.3× (sig) |
+| high_volume_zone | ↑ 9.2× (sig) | **↑ 23.4×** (sig) |
+| low_volume_zone | ↓ 0.11× (sig) | ↓ 0.03× (sig) |
+| night | ↓ 0.52× (sig) | ↓ 0.78× (sig) |
+| peak_hour | 1.40× (n.s.) | 1.18× (n.s.) |
+| weekend | 0.69× (n.s.) | ↑ 1.27× (sig) |
+
+Ranked drivers — Chicago: `high_demand > high_volume_zone > low_volume_zone > night`; NYC:
+`low_volume_zone > high_volume_zone > high_demand > night > weekend`. (Note `peak_hour` is *not* a
+significant independent driver once demand is accounted for — a plausible-sounding but wrong
+explanation the faithfulness score would penalize.)
+
+**Provider ablation — ready, pending working credentials.** The framework runs OpenAI / Anthropic /
+HuggingFace, plus a deterministic `mock` provider used for CI (the mock scores faithfulness 0.82 on
+Chicago / 0.76 on NYC, confirming the scorer end-to-end). Real-provider numbers are **not yet
+obtained**: the available OpenAI key is out of billing quota (HTTP 429), the Anthropic key is a
+placeholder, and the HuggingFace token lacks inference permission (HTTP 403). One command produces the
+table once a funded key is set: `python src/llm_faithfulness.py --data <csv> --providers openai,anthropic,huggingface`.
+🔲 (real-provider faithfulness scores + GPT-4/Claude/Mistral comparison)
 
 ## 7. Experiments and Results  ✍️ (leakage-free; Chicago 32 d + NYC 6 mo, CIs — Phase 1/2)
 

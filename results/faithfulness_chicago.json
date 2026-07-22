@@ -1,0 +1,122 @@
+{
+  "data": "data/processed/chicago_taxi_sides.csv",
+  "n_test": 1089,
+  "n_sample": 40,
+  "ground_truth": {
+    "factors": {
+      "high_demand": {
+        "direction": "increases",
+        "significant": true,
+        "ratio": 9.632,
+        "effect": 2.265,
+        "p_value": 0.0,
+        "mean_err_factor": 79.47,
+        "mean_err_rest": 8.25,
+        "n1": 109
+      },
+      "peak_hour": {
+        "direction": "none",
+        "significant": false,
+        "ratio": 1.399,
+        "effect": 0.336,
+        "p_value": 0.06375,
+        "mean_err_factor": 19.51,
+        "mean_err_rest": 13.95,
+        "n1": 280
+      },
+      "night": {
+        "direction": "decreases",
+        "significant": true,
+        "ratio": 0.519,
+        "effect": 0.656,
+        "p_value": 0.0,
+        "mean_err_factor": 9.3,
+        "mean_err_rest": 17.92,
+        "n1": 321
+      },
+      "weekend": {
+        "direction": "none",
+        "significant": false,
+        "ratio": 0.695,
+        "effect": 0.364,
+        "p_value": 0.46181,
+        "mean_err_factor": 11.46,
+        "mean_err_rest": 16.49,
+        "n1": 241
+      },
+      "high_volume_zone": {
+        "direction": "increases",
+        "significant": true,
+        "ratio": 9.177,
+        "effect": 2.217,
+        "p_value": 0.0,
+        "mean_err_factor": 32.34,
+        "mean_err_rest": 3.52,
+        "n1": 448
+      },
+      "low_volume_zone": {
+        "direction": "decreases",
+        "significant": true,
+        "ratio": 0.11,
+        "effect": 2.209,
+        "p_value": 0.0,
+        "mean_err_factor": 2.57,
+        "mean_err_rest": 23.36,
+        "n1": 418
+      }
+    },
+    "ranked_drivers": [
+      "high_demand",
+      "high_volume_zone",
+      "low_volume_zone",
+      "night"
+    ]
+  },
+  "providers": {
+    "mock": {
+      "directional_accuracy": 1.0,
+      "top3_driver_recall": 0.667,
+      "hallucination_rate": 0.2,
+      "rank_spearman": 0.8,
+      "faithfulness": 0.822,
+      "n_true_significant": 4,
+      "true_direction_hits": [
+        "high_demand",
+        "night",
+        "high_volume_zone",
+        "low_volume_zone"
+      ],
+      "hallucinated": [
+        "peak_hour"
+      ],
+      "available": true,
+      "model": null,
+      "claims": {
+        "factors": {
+          "high_demand": "increases",
+          "peak_hour": "increases",
+          "night": "decreases",
+          "weekend": "none",
+          "high_volume_zone": "increases",
+          "low_volume_zone": "decreases"
+        },
+        "ranked_drivers": [
+          "high_demand",
+          "high_volume_zone",
+          "peak_hour"
+        ]
+      }
+    },
+    "openai": {
+      "available": true,
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/doc"
+    },
+    "anthropic": {
+      "available": false
+    },
+    "huggingface": {
+      "available": true,
+      "error": "HfHubHTTPError: (Request ID: Root=1-6a60a54f-44cd9ec24b60d6601a6f82a5;79641ae6-4cf8-44a6-9b5f-980c3b7e2e96)\n\n403 Forbidden: This authentication method does not have sufficient permissions to call Inference Providers "
+    }
+  }
+}
