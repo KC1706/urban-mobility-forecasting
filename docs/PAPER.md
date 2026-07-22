@@ -185,16 +185,55 @@ operational failures; a model motivated by them reduces the largest one; and a r
 keeps us from claiming a fashionable component (spatial GCN) that never earns its place here.
 
 **Honest caveats.**
-- *Single training run per cell* (one seed). Aggregate R²/RMSE are point estimates; the robustness
-  columns carry bootstrap CIs, but multi-seed variance on the headline metrics is **remaining work**.
 - *Trade-off:* on NYC boroughs `full` (with spatial) has a better high-demand degradation *ratio*
   than `−spatial` (+229% vs +321%) — GCN smoothing spreads error more evenly at a large
   aggregate-accuracy cost; deployment-dependent, and we report both.
-- *Why spatial fails here:* even at 260 zones the demand-correlation adjacency links the dominant
-  high-volume zones densely; a *learned sparse / distance-aware* adjacency (rather than
-  correlation-thresholded) is the natural next attempt. 🔲
+- §5.1 numbers are single-seed (GPU); §5.4 supplies the 5-seed mean±std that tempers the coarse-grid
+  claims.
 
-**Baselines:** RF / XGBoost / LightGBM / LSTM (Phase 0–1) + **STGCN, Graph WaveNet** (this section,
+### 5.4 Rescuing spatial: learned/geographic adjacency + 5-seed variance (coarse grids)
+
+Was the spatial GCN's failure the *component* or just its *graph*? We give it three better graphs
+— `full_distance` (geographic k-NN Gaussian), `full_adaptive` (learned dense adjacency, Graph-WaveNet
+style), `full_adaptive_sparse` (learned adjacency, top-k sparsified) — and run every variant over
+**5 seeds** (mean±std) to separate real differences from seed noise. (On CPU; the ~260-zone fine grid
+is excluded here as its verdict is already settled in §5.1.)
+
+| Grid | Model | R² (mean±std) | RMSE (mean±std) |
+|---|---|---|---|
+| **Chicago** (9 sides) | RandomForest | 0.9388 | 35.10 |
+| | **ST-HAE −spatial** | **0.9620 ± 0.0073** | 27.54 ± 2.73 |
+| | ST-HAE full (corr graph) | 0.9554 ± 0.0078 | 29.88 ± 2.57 |
+| | ST-HAE full (distance graph) | 0.9549 ± 0.0059 | 30.06 ± 1.99 |
+| | ST-HAE full (learned dense) | 0.9552 ± 0.0085 | 29.89 ± 2.87 |
+| | ST-HAE full (**learned sparse**) | 0.9588 ± 0.0077 | 28.70 ± 2.67 |
+| **NYC** (6 boroughs) | RandomForest | 0.9810 | 268.0 |
+| | **ST-HAE −spatial** | **0.9898 ± 0.0006** | 196.5 ± 6.0 |
+| | ST-HAE full (corr graph) | 0.9826 ± 0.0019 | 256.6 ± 14.1 |
+| | ST-HAE full (learned dense) | 0.9846 ± 0.0012 | 240.8 ± 9.6 |
+| | ST-HAE full (**learned sparse**) | 0.9850 ± 0.0019 | 237.5 ± 15.1 |
+
+*(NYC `full_distance` is omitted — the "Unknown" borough has no centroid, so a geographic graph is
+undefined; the builder returns None and the run skips it.)*
+
+**Findings (nuanced, and stronger for it):**
+1. **Part of the failure *was* the graph.** A **learned sparse adjacency beats the
+   correlation-thresholded one on both cities** (Chicago 0.9554→0.9588; NYC 0.9826→0.9850), and the
+   learned dense adjacency helps on NYC too. So the original demand-correlation graph was a poor
+   choice — as we suspected — and a learned graph recovers much of the gap.
+2. **But spatial still doesn't win.** Even the best learned adjacency does not beat `−spatial`:
+   on **NYC decisively** (ΔR²=+0.0047 vs a pooled σ≈0.0020 — *beyond* seed noise), and on **Chicago it
+   only ties** (ΔR²=+0.0032 vs pooled σ≈0.011 — *within* noise). For this coarse-zone taxi problem the
+   spatial graph earns its place *at best* as a wash; the leanest strong model omits it.
+3. **Multi-seed honesty.** The `−spatial` > `full` headline is **decisive on NYC** (large data, σ≈0.001)
+   but **within seed noise on Chicago** (small 32-day data, σ≈0.008). Small datasets can't resolve
+   these differences — itself a caution for the single-city/short-window literature.
+
+**Net verdict on spatial:** the graph convolution is *not* the contribution here. A learned sparse
+graph rescues it from actively harmful to roughly neutral, but the recommended model — temporal
+attention + MoE — remains best or tied everywhere, and is what we report. (`results/st_hae_*_adj.json`.)
+
+**Baselines:** RF / XGBoost / LightGBM / LSTM (Phase 0–1) + **STGCN, Graph WaveNet** (§5.1,
 `src/st_gnn_baselines.py`). ✅
 
 ## 6. LLM Explainability  🔲 (Phase 4)

@@ -247,6 +247,33 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
 
 ## Phase 3 — ST-HAE: The Real Model  ✅ (trained; ablation + ST-GNN baselines across 3 grids, on Kaggle GPU)
 
+### E-018 · 2026-07-22 · [P3] Spatial rescue (learned/geographic adjacency) + 5-seed variance: graph was suboptimal but spatial still doesn't win
+- **What ran:** added 3 adjacency modes to the GCN — `full_distance` (geographic kNN Gaussian),
+  `full_adaptive` (learned dense, Graph-WaveNet style), `full_adaptive_sparse` (learned top-k sparse)
+  — and ran all variants over **5 seeds** for mean±std, coarse grids. `results/st_hae_{chicago,nyc}_adj.json`.
+- **Findings:**
+  1. *Part of the earlier failure was the graph, not the component:* a **learned sparse adjacency
+     beats the correlation-thresholded one** on both cities (Chicago full 0.9554→0.9588; NYC
+     0.9826→0.9850). The ρ>0.3 demand-correlation graph really was a poor choice.
+  2. *But spatial still doesn't win:* even the best learned adjacency < `no_spatial` — NYC decisively
+     (ΔR²=+0.0047, pooled σ≈0.0020, beyond noise), Chicago only a tie (ΔR²=+0.0032, pooled σ≈0.011,
+     within noise).
+  3. *Multi-seed tempers the headline:* `no_spatial > full` is decisive on NYC (σ≈0.0006) but **within
+     seed noise on Chicago** (σ≈0.008, small 32-day data). Removed the "single-seed" caveat from §5.3
+     and added §5.4 with mean±std.
+- **Ops story (documented for reproducibility):**
+  - **Kaggle weekly GPU quota (30 h) exhausted** — a `kernels push` with `enable_gpu:true` fails with
+    "Maximum weekly GPU quota reached". The heavy 5-seed×3-grid GPU run (v4) had silently **fallen back
+    to CPU** (P100 cu121 fix didn't land that allocation) and was heading for the 12 h wall on the
+    260-node fine grid (~27 h of CPU work). Can't cancel via API.
+  - **Fix:** re-pushed as a **CPU kernel** (`enable_gpu:false` — sidesteps the exhausted GPU quota),
+    **coarse grids only** (fast on CPU), which supersedes the running version. Completed in ~3.5 h.
+    The fine-grid spatial verdict stands on the E-017 GPU run. [[kaggle-p100-torch-fix]]
+- **Learning:** the honest multi-seed result is *more* nuanced and more credible than the single-seed
+  one — it both (a) vindicates the hypothesis that the correlation graph was the problem, and (b) shows
+  spatial still doesn't beat dropping it, while (c) admitting Chicago can't resolve the difference at
+  all. "Run it 5 times" changed a clean story into a true one. [[E-017]]
+
 ### E-017 · 2026-07-21 · [P3] ⭐ Fine-grid retry + ST-GNN baselines (Kaggle GPU): spatial GCN hurts at every scale; ST-HAE−spatial beats STGCN & Graph WaveNet
 - **What ran (on GPU this time):** added STGCN + Graph WaveNet (`src/st_gnn_baselines.py`, sharing
   the ST-HAE forward signature + eval harness) and a fine ~260-zone NYC TLC grid

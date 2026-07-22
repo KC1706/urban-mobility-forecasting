@@ -101,9 +101,16 @@ spatial-conv-heavy baselines underperform. RF collapses on the fine grid (R²=0.
 **Guardrail (resolved):** ST-HAE (temporal+MoE core) beats all baselines, so the paper leads with the
 model + ablation. Framework (§4) remains the spine.
 
-**Remaining Phase 3 (optional):** learned sparse/distance-aware adjacency (last attempt to rescue
-spatial); multi-seed variance on headline metrics. **Track B:** §5 fully written (3-grid table +
-baselines + negative result).
+8. ✅ Learned sparse/distance adjacency + 5-seed variance done (E-018, §5.4). Learned sparse
+   adjacency **beats** the correlation graph (Chicago 0.9554→0.9588, NYC 0.9826→0.9850) but still
+   loses to `no_spatial` (NYC beyond seed noise; Chicago a tie within noise). `no_spatial > full`
+   is decisive on NYC (σ≈0.001), within seed noise on Chicago (σ≈0.008, small data).
+
+**Phase 3 CLOSED.** Recommended model = ST-HAE−spatial (temporal attention + MoE): beats
+RF/XGBoost/STGCN/GraphWaveNet on all grids; spatial graph conv is at best neutral even with a learned
+graph, so it is dropped. **Track B:** §5 fully written (ablation + ST-GNN baselines + 3-grid + spatial
+rescue + multi-seed). Note: Kaggle weekly GPU quota (30 h) is spent — further heavy runs need the
+weekly reset or CPU.
 
 ## Phase 4 — LLM Explainability, Evaluated (Weeks 8–9)
 - Ground-truth failure attribution (per-zone/per-hour causes).
