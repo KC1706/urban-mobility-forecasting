@@ -124,9 +124,13 @@ weekly reset or CPU.
   open-vs-closed table. **Track B:** ✅ §6 written (protocol + ground-truth + real Llama result).
 
 ## Phase 5 — Synthesis & Release (Weeks 10–12)
-- One-command reproducible run producing every paper number.
-- Dockerfile + CI + final README; tagged release.
-- **Track B:** Abstract/Intro/Discussion/Limitations/Conclusion; adversarial self-review; arXiv + venue submission.
+- ✅ Figures from `results/*.json` (`src/make_figures.py`, 5 figs, embedded in §4/§5/§6). (E-021)
+- ✅ One-command reproduction: `make reproduce` (tests + robustness + figures, no GPU/downloads);
+  `requirements-core.txt`, `Dockerfile` (CPU torch), GitHub Actions CI. (E-021)
+- ✅ Final README rewritten to honest results; consistency-checked every number vs the JSONs;
+  fixed the unconditional-TensorFlow import bug in `baseline_models`. (E-021)
+- 🔲 LaTeX assembly into the venue template; Abstract/Intro/Discussion polish; adversarial
+  self-review; arXiv + venue submission. **Track B**
 
 ---
 

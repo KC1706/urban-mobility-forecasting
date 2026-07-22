@@ -37,12 +37,17 @@ except Exception:
     lgb = None
     print("LightGBM not installed. Models unavailable.")
 
-# Deep Learning
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+# Deep Learning (optional — only the Keras-LSTM baseline needs it; the RF/XGB/robustness/ST-HAE
+# pipeline does not, so guard the import so the core is installable without TensorFlow).
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
+    from tensorflow.keras.optimizers import Adam
+    from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+except Exception:
+    tf = None
+    print("TensorFlow not installed. Keras-LSTM baseline unavailable (core pipeline unaffected).")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

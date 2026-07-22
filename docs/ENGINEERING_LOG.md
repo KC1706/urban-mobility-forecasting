@@ -417,5 +417,30 @@ Runs in parallel with `PAPER.md` and `RESEARCH_PLAN.md`. Newest entries at the t
   improvement claim defensible rather than an apples-to-oranges artifact.
 
 
-## Phase 4 — LLM Explainability, Evaluated  🔲 (not started)
-## Phase 5 — Synthesis & Release  🔲 (not started)
+## Phase 5 — Synthesis & Release  ✍️ (figures + reproducibility infra done)
+
+### E-021 · 2026-07-23 · [P5] Figures, one-command reproduction, and a stale-README fix
+- **Figures:** `src/make_figures.py` renders 5 paper figures from the committed `results/*.json`
+  (conformal collapse, per-zone R² forest, 3-grid model comparison, adjacency+multi-seed, LLM
+  faithfulness) → `paper/figures/`. Embedded into `PAPER.md`. Pure post-processing, no train/API.
+- **Reproducibility:** `requirements-core.txt` (lean, no GDAL/TensorFlow/notebooks), `Makefile`
+  (`setup`/`test`/`robustness`/`figures`/`reproduce`/`train-*`), `Dockerfile` (CPU torch), and
+  GitHub Actions `ci.yml` (pytest + figure smoke + a fast robustness re-run). `make reproduce`
+  needs no GPU and no downloads (processed CSVs are committed).
+- **Bug found & fixed:** `baseline_models.py` imported **TensorFlow unconditionally**, so `import
+  baseline_models` (which the whole robustness/ST-HAE/faithfulness core transitively needs) would
+  crash in any env without TF. Guarded it like xgboost/lightgbm → core is installable from
+  `requirements-core.txt` alone.
+- **Consistency pass:** rewrote the top-level `README.md`, which still advertised the **retracted**
+  leaky numbers (RF R²=0.994) and the retracted "per-zone strongly negative" claim. Now states the
+  honest two-city findings; verified every headline number in README/PAPER matches the JSONs
+  (script diff — all exact).
+- **Learning:** the release step is where stale claims hide. The README had been left at the Phase-0
+  leaky story for the entire project; a mechanical "every number must trace to a committed JSON"
+  check is the cheapest guard against shipping a contradiction.
+
+### Remaining Phase 5
+- LaTeX assembly into the venue template; final prose polish. 🔲
+
+
+## Phase 4 — LLM Explainability, Evaluated  ✅ (see entries above — E-019/E-020)
