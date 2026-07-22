@@ -273,13 +273,14 @@ Ranked drivers — Chicago: `high_demand > high_volume_zone > low_volume_zone > 
 significant independent driver once demand is accounted for — a plausible-sounding but wrong
 explanation the faithfulness score would penalize.)
 
-**Provider ablation — ready, pending working credentials.** The framework runs OpenAI / Anthropic /
-HuggingFace, plus a deterministic `mock` provider used for CI (the mock scores faithfulness 0.82 on
-Chicago / 0.76 on NYC, confirming the scorer end-to-end). Real-provider numbers are **not yet
-obtained**: the available OpenAI key is out of billing quota (HTTP 429), the Anthropic key is a
-placeholder, and the HuggingFace token lacks inference permission (HTTP 403). One command produces the
-table once a funded key is set: `python src/llm_faithfulness.py --data <csv> --providers openai,anthropic,huggingface`.
-🔲 (real-provider faithfulness scores + GPT-4/Claude/Mistral comparison)
+**Provider ablation — ready, pending working credentials.** The framework runs **Groq** (free,
+OpenAI-compatible, frontier *open* models e.g. Llama-3.3-70B) / OpenAI / Anthropic / HuggingFace, plus
+a deterministic `mock` provider used for CI (the mock scores faithfulness 0.82 on Chicago / 0.76 on
+NYC, confirming the scorer end-to-end). Real-provider numbers are **not yet obtained**: the available
+OpenAI key is out of billing quota (HTTP 429), the Anthropic key is a placeholder, and the
+HuggingFace token lacks inference permission (HTTP 403). One command produces the table once any key
+is set (a **free Groq key** suffices): `python src/llm_faithfulness.py --data <csv> --providers groq,openai,anthropic`.
+🔲 (real-provider faithfulness scores + open/closed-model comparison)
 
 ## 7. Experiments and Results  ✍️ (leakage-free; Chicago 32 d + NYC 6 mo, CIs — Phase 1/2)
 

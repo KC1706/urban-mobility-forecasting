@@ -154,13 +154,21 @@ def call_llm(provider, prompt, model=None, timeout=60):
     """Return raw text from a provider. Reads keys from env. 'mock' needs no key."""
     if provider == "mock":
         return _MOCK_RESPONSE
-    if provider == "openai":
+    if provider in ("openai", "groq"):
+        # Groq is OpenAI-API-compatible: same SDK, different base_url + a free open model.
         from openai import OpenAI
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=timeout)
-        r = client.chat.completions.create(
-            model=model or "gpt-4o-mini", temperature=0,
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"})
+        if provider == "groq":
+            client = OpenAI(api_key=os.environ["GROQ_API_KEY"],
+                            base_url="https://api.groq.com/openai/v1", timeout=timeout)
+            model = model or "llama-3.3-70b-versatile"
+        else:
+            client = OpenAI(api_key=os.environ["OPENAI_API_KEY"], timeout=timeout)
+            model = model or "gpt-4o-mini"
+        kw = dict(model=model, temperature=0, messages=[{"role": "user", "content": prompt}])
+        try:                                            # JSON mode when the model supports it
+            r = client.chat.completions.create(**kw, response_format={"type": "json_object"})
+        except Exception:                               # noqa: BLE001 — fall back to plain + tolerant parse
+            r = client.chat.completions.create(**kw)
         return r.choices[0].message.content
     if provider == "anthropic":
         import anthropic
@@ -245,7 +253,7 @@ def _r(x):
 # --------------------------------------------------------------------------------------
 def _key_present(provider):
     envk = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY",
-            "huggingface": "HUGGINGFACE_API_KEY"}.get(provider)
+            "huggingface": "HUGGINGFACE_API_KEY", "groq": "GROQ_API_KEY"}.get(provider)
     return provider == "mock" or (envk and len(os.environ.get(envk, "")) >= 30)
 
 
@@ -293,7 +301,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="data/processed/chicago_taxi_sides.csv")
     ap.add_argument("--providers", default="mock",
-                    help="comma list: mock,openai,anthropic,huggingface")
+                    help="comma list: mock,groq,openai,anthropic,huggingface "
+                         "(groq = free, OpenAI-compatible, open models like llama-3.3-70b)")
     ap.add_argument("--n-sample", type=int, default=40)
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
